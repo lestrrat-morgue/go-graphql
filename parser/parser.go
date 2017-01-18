@@ -44,7 +44,7 @@ func (p *Parser) Parse(ctx context.Context, src []byte) (*model.Document, error)
 
 	var pctx parseCtx
 	pctx.Context = ctx
-	pctx.lexsrc = make(chan *Token)
+	pctx.lexsrc = make(chan *Token, 256)
 	pctx.peekCount = -1
 	pctx.peekTokens = [3]*Token{}
 	pctx.types = make(map[string]*model.NamedType)
