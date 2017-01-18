@@ -2,6 +2,7 @@ package model
 
 type Document struct {
 	definitions []Definition
+	types       TypeList
 }
 
 type Definition interface{}
@@ -82,6 +83,7 @@ type EnumValue struct {
 	name string
 }
 
+// ObjectField represents a literal object's field (NOT a type)
 type ObjectField struct {
 	name string
 	value Value
@@ -127,4 +129,18 @@ type InlineFragment struct {
 	selections SelectionSet
 	typ        *NamedType
 }
+
+type TypeList []Type
+
+type ObjectTypeDefinition struct {
+	name string
+	fields ObjectTypeFieldList
+}
+
+type ObjectTypeDefinitionList []*ObjectTypeDefinition
+type ObjectTypeField struct {
+	name string
+	typ  Type
+}
+type ObjectTypeFieldList []*ObjectTypeField
 

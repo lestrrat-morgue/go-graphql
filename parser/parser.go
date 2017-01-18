@@ -13,6 +13,7 @@ const (
 	mutationKey = "mutation"
 	fragmentKey = "fragment"
 	onKey       = "on"
+	typeKey     = "type"
 )
 
 type Parser struct{}
@@ -149,6 +150,12 @@ func (pctx *parseCtx) parseDocument() (*model.Document, error) {
 					return nil, errors.Wrap(err, `failed to parse fragment definition`)
 				}
 				doc.AddDefinitions(frag)
+			case typeKey:
+				typ, err := pctx.parseObjectTypeDefinition()
+				if err != nil {
+					return nil, errors.Wrap(err, `failed to parse object type definition`)
+				}
+				doc.AddDefinitions(typ)
 			default:
 				return nil, syntaxErr(t, `expected query, mutation, fragment`)
 			}
@@ -806,3 +813,74 @@ func (pctx *parseCtx) parseObjectField() (*model.ObjectField, error) {
 	}
 	return model.NewObjectField(name, v), nil
 }
+
+func (pctx *parseCtx) parseObjectTypeDefinition() (*model.ObjectTypeDefinition, error) {
+	switch t := pctx.next(); t.Type {
+	case NAME:
+		if t.Value != typeKey {
+			return nil, syntaxErr(t, `object type: expected "type", got %s`, t.Value)
+		}
+	default:
+		return nil, unexpectedToken(t, `object type`, NAME)
+	}
+	
+	var name string
+	switch t := pctx.next(); t.Type {
+	case NAME:
+		name = t.Value
+	default:
+		return nil, unexpectedToken(t, `object type`, NAME)
+	}
+
+	switch t := pctx.next(); t.Type {
+	case BRACE_L:
+	default:
+		return nil, unexpectedToken(t, `object type`, BRACE_L)
+	}
+
+	def := model.NewObjectTypeDefinition(name)
+	for loop := true; loop; {
+		switch t := pctx.peek(); t.Type {
+		case BRACE_R:
+			loop = false
+			continue
+		}
+
+		field, err := pctx.parseObjectTypeField()
+		if err != nil {
+			return nil, errors.Wrap(err, `failed to parse object type field`)
+		}
+		def.AddFields(field)
+	}
+
+	switch t := pctx.next(); t.Type {
+	case BRACE_R:
+	default:
+		return nil, unexpectedToken(t, `object type`, BRACE_R)
+	}
+
+	return def, nil
+}
+
+func (pctx *parseCtx) parseObjectTypeField() (*model.ObjectTypeField, error) {
+	var name string
+	switch t := pctx.next(); t.Type {
+	case NAME:
+		name = t.Value
+	default:
+		return nil, unexpectedToken(t, `object field`, NAME)
+	}
+
+	switch t := pctx.next(); t.Type {
+	case COLON:
+	default:
+		return nil, unexpectedToken(t, `object field`, COLON)
+	}
+
+	typ, err := pctx.parseNamedType()
+	if err != nil {
+		return nil, errors.Wrap(err, `object field: failed to parse value`)
+	}
+	return model.NewObjectTypeField(name, typ), nil
+}
+	

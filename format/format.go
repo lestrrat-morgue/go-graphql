@@ -62,6 +62,10 @@ func (ctx *fmtCtx) fmtDocument(dst io.Writer, v *model.Document) error {
 			if err := ctx.fmtFragmentDefinition(&buf, def.(*model.FragmentDefinition)); err != nil {
 				return errors.Wrap(err, `failed to format fragment definition`)
 			}
+		case *model.ObjectTypeDefinition:
+			if err := ctx.fmtObjectTypeDefinition(&buf, def.(*model.ObjectTypeDefinition)); err != nil {
+				return errors.Wrap(err, `failed to format object type definition`)
+			}
 		}
 	}
 
@@ -446,6 +450,34 @@ func (ctx *fmtCtx) fmtDirectives(dst io.Writer, dirch chan *model.Directive) err
 		i++
 	}
 
+	if _, err := buf.WriteTo(dst); err != nil {
+		return errors.Wrap(err, `failed to write to destination`)
+	}
+	return nil
+}
+
+func (ctx *fmtCtx) fmtObjectTypeDefinition(dst io.Writer, v *model.ObjectTypeDefinition) error {
+	var buf bytes.Buffer
+	buf.WriteString("type ")
+	buf.WriteString(v.Name())
+	buf.WriteString(" {")
+	err := ctx.enterleave(func() error {
+		for field := range v.Fields() {
+		buf.WriteByte('\n')
+		buf.Write(ctx.indent())
+			buf.WriteString(field.Name())
+			buf.WriteString(": ")
+			if err := ctx.fmtType(&buf, field.Type()); err != nil {
+				return errors.Wrap(err, `failed to format object field type`)
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	buf.WriteString("\n}")
+	
 	if _, err := buf.WriteTo(dst); err != nil {
 		return errors.Wrap(err, `failed to write to destination`)
 	}

@@ -137,5 +137,11 @@ t.Run(parseSuccess(`query HeroForEpisode($ep: Episode!) {
     lat: -53.211
   })
 }`))
+	t.Run(parseSuccess(`type Person {
+  name: String
+  age: Int
+  picture: Url
+  relationship: Person
+}`))
 }
  
