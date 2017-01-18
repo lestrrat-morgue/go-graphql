@@ -52,6 +52,10 @@ func (def FragmentDefinition) Type() *NamedType {
 	return def.typ
 }
 
+func (def *FragmentDefinition) AddDirectives(list ...*Directive) {
+	def.directives.Add(list...)
+}
+
 func NewOperationDefinition(typ OperationType) *OperationDefinition {
 	return &OperationDefinition{
 		typ: typ,

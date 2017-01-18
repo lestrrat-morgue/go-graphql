@@ -223,7 +223,14 @@ func (pctx *parseCtx) parseFragmentDefinition() (*model.FragmentDefinition, erro
 
 	fdef := model.NewFragmentDefinition(name, typ)
 
-	// TODO: Directives
+	switch t := pctx.peek(); t.Type {
+	case AT:
+		directives, err := pctx.parseDirectives()
+		if err != nil {
+			return nil, errors.Wrap(err, `failed to parse directives`)
+		}
+		fdef.AddDirectives(directives...)
+	}
 
 	set, err := pctx.parseSelectionSet()
 	if err != nil {
