@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"fmt"
 	"unicode"
 	"unicode/utf8"
 
@@ -56,7 +55,6 @@ func (lctx *lexCtx) emit(tt TokenType) {
 		case <-lctx.Done():
 		case lctx.out <- &tok:
 		}
-		fmt.Printf("emit: %s (%s)\n", tt, tok.Value)
 	}
 	lctx.start = lctx.pos - offset
 }
