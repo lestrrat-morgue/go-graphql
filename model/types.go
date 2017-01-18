@@ -88,3 +88,11 @@ func (t ObjectTypeField) Name() string {
 func (t ObjectTypeField) Type() Type {
 	return t.typ
 }
+
+func (t *ObjectTypeField) AddArguments(list ...*Argument) {
+	t.arguments.Add(list...)
+}
+
+func (t ObjectTypeField) Arguments() chan *Argument {
+	return t.arguments.Iterator()
+}

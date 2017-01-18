@@ -871,6 +871,16 @@ func (pctx *parseCtx) parseObjectTypeField() (*model.ObjectTypeField, error) {
 		return nil, unexpectedToken(t, `object field`, NAME)
 	}
 
+	var arguments model.ArgumentList
+	switch t := pctx.peek(); t.Type {
+	case PAREN_L:
+		var err error
+		arguments, err = pctx.parseArguments()
+		if err != nil {
+			return nil, errors.Wrap(err, `failed to parse arguments`)
+		}
+	}
+
 	switch t := pctx.next(); t.Type {
 	case COLON:
 	default:
@@ -881,6 +891,8 @@ func (pctx *parseCtx) parseObjectTypeField() (*model.ObjectTypeField, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, `object field: failed to parse value`)
 	}
-	return model.NewObjectTypeField(name, typ), nil
+	f := model.NewObjectTypeField(name, typ)
+	f.AddArguments(arguments...)
+	return f, nil
 }
 	

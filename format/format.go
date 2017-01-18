@@ -466,6 +466,9 @@ func (ctx *fmtCtx) fmtObjectTypeDefinition(dst io.Writer, v *model.ObjectTypeDef
 		buf.WriteByte('\n')
 		buf.Write(ctx.indent())
 			buf.WriteString(field.Name())
+			if err := ctx.fmtArgumentList(&buf, field.Arguments()); err != nil {
+				return errors.Wrap(err, `failed to format object field argumets`)
+			}
 			buf.WriteString(": ")
 			if err := ctx.fmtType(&buf, field.Type()); err != nil {
 				return errors.Wrap(err, `failed to format object field type`)

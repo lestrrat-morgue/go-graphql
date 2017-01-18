@@ -143,5 +143,9 @@ t.Run(parseSuccess(`query HeroForEpisode($ep: Episode!) {
   picture: Url
   relationship: Person
 }`))
+	t.Run(parseSuccess(`type Person {
+  name: String
+  picture(size: Int): Url
+}`))
 }
  

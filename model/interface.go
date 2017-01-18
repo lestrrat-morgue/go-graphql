@@ -85,7 +85,7 @@ type EnumValue struct {
 
 // ObjectField represents a literal object's field (NOT a type)
 type ObjectField struct {
-	name string
+	name  string
 	value Value
 }
 type ObjectFieldList []*ObjectField
@@ -133,14 +133,14 @@ type InlineFragment struct {
 type TypeList []Type
 
 type ObjectTypeDefinition struct {
-	name string
+	name   string
 	fields ObjectTypeFieldList
 }
 
 type ObjectTypeDefinitionList []*ObjectTypeDefinition
 type ObjectTypeField struct {
-	name string
-	typ  Type
+	name      string
+	typ       Type
+	arguments ArgumentList
 }
 type ObjectTypeFieldList []*ObjectTypeField
-
