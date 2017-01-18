@@ -669,7 +669,7 @@ func (pctx *parseCtx) parseArguments() (model.ArgumentList, error) {
 	switch t := pctx.next(); t.Type {
 	case PAREN_L:
 	default:
-		return nil, errors.Errorf(`arguments: expected (, got %s`, t.Type)
+		return nil, unexpectedToken(t, `arguments`, PAREN_L)
 	}
 
 	var args model.ArgumentList
@@ -686,13 +686,13 @@ func (pctx *parseCtx) parseArguments() (model.ArgumentList, error) {
 		case NAME:
 			name = t.Value
 		default:
-			return nil, errors.Errorf(`arguments: expected NAME, got %s`, t.Type)
+			return nil, unexpectedToken(t, `arguments`, NAME)
 		}
 
 		switch t := pctx.next(); t.Type {
 		case COLON:
 		default:
-			return nil, errors.Errorf(`arguments: expected COLON, got %s`, t.Type)
+			return nil, unexpectedToken(t, `arguments`, COLON)
 		}
 
 		value, err := pctx.parseValue()
@@ -700,13 +700,15 @@ func (pctx *parseCtx) parseArguments() (model.ArgumentList, error) {
 			return nil, errors.Wrap(err, `failed to parse value`)
 		}
 
+
 		args = append(args, model.NewArgument(name, value))
+
 	}
 
 	switch t := pctx.next(); t.Type {
 	case PAREN_R:
 	default:
-		return nil, errors.Errorf(`arguments: expected ), got %s`, t.Type)
+		return nil, unexpectedToken(t, `arguments`, PAREN_R)
 	}
 
 	return args, nil
@@ -863,7 +865,7 @@ func (pctx *parseCtx) parseObjectTypeDefinition() (*model.ObjectTypeDefinition, 
 			continue
 		}
 
-		field, err := pctx.parseObjectTypeField()
+		field, err := pctx.parseObjectTypeDefinitionField()
 		if err != nil {
 			return nil, errors.Wrap(err, `failed to parse object type field`)
 		}
@@ -879,7 +881,7 @@ func (pctx *parseCtx) parseObjectTypeDefinition() (*model.ObjectTypeDefinition, 
 	return def, nil
 }
 
-func (pctx *parseCtx) parseObjectTypeField() (*model.ObjectTypeField, error) {
+func (pctx *parseCtx) parseObjectTypeDefinitionField() (*model.ObjectTypeDefinitionField, error) {
 	var name string
 	switch t := pctx.next(); t.Type {
 	case NAME:
@@ -888,11 +890,11 @@ func (pctx *parseCtx) parseObjectTypeField() (*model.ObjectTypeField, error) {
 		return nil, unexpectedToken(t, `object field`, NAME)
 	}
 
-	var arguments model.ArgumentList
+	var arguments model.ObjectTypeDefinitionFieldArgumentList
 	switch t := pctx.peek(); t.Type {
 	case PAREN_L:
 		var err error
-		arguments, err = pctx.parseArguments()
+		arguments, err = pctx.parseObjectTypeDefinitionFieldArguments()
 		if err != nil {
 			return nil, errors.Wrap(err, `failed to parse arguments`)
 		}
@@ -908,8 +910,66 @@ func (pctx *parseCtx) parseObjectTypeField() (*model.ObjectTypeField, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, `object field: failed to parse type`)
 	}
-	f := model.NewObjectTypeField(name, typ)
+	f := model.NewObjectTypeDefinitionField(name, typ)
 	f.AddArguments(arguments...)
 	return f, nil
 }
-	
+
+func (pctx *parseCtx) parseObjectTypeDefinitionFieldArguments() (model.ObjectTypeDefinitionFieldArgumentList, error) {
+	switch t := pctx.next(); t.Type {
+	case PAREN_L:
+	default:
+		return nil, unexpectedToken(t, `object field arguments`, PAREN_L)
+	}
+
+	var args model.ObjectTypeDefinitionFieldArgumentList
+
+	for loop := true; loop; {
+		switch t := pctx.peek(); t.Type {
+		case PAREN_R:
+			loop = false
+			continue
+		}
+
+		var name string
+		switch t := pctx.next(); t.Type {
+		case NAME:
+			name = t.Value
+		default:
+			return nil, unexpectedToken(t, `object field arguments`, NAME)
+		}
+
+		switch t := pctx.next(); t.Type {
+		case COLON:
+		default:
+			return nil, unexpectedToken(t, `object field arguments`, COLON)
+		}
+
+		typ, err := pctx.parseType()
+		if err != nil {
+			return nil, errors.Wrap(err, `failed to parse object field type`)
+		}
+
+		arg := model.NewObjectTypeDefinitionFieldArgument(name, typ)
+
+		switch t := pctx.peek(); t.Type {
+		case EQUALS:
+			// we have default
+			pctx.advance()
+			value, err := pctx.parseValue()
+			if err != nil {
+				return nil, errors.Wrap(err, `failed to parse object field default value`)
+			}
+			arg.SetDefaultValue(value)
+		}
+
+		args = append(args, arg)
+	}
+	switch t := pctx.next(); t.Type {
+	case PAREN_R:
+	default:
+		return nil, unexpectedToken(t, `object field arguments`, PAREN_R)
+	}
+
+	return args, nil
+}

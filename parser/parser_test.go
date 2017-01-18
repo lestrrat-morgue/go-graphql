@@ -151,5 +151,10 @@ t.Run(parseSuccess(`query HeroForEpisode($ep: Episode!) {
   name: String!
   appearsIn: [Episode]!
 }`))
+	t.Run(parseSuccess(`type Starship {
+  id: ID!
+  name: String!
+  length(unit: LengthUnit = METER): Float
+}`))
 }
  

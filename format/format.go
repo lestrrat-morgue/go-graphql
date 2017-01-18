@@ -258,7 +258,6 @@ func (ctx *fmtCtx) fmtArgumentList(dst io.Writer, argch chan *model.Argument) er
 		return errors.Wrap(err, `failed to write to destination`)
 	}
 	return nil
-	return nil
 }
 
 func (ctx *fmtCtx) fmtField(dst io.Writer, v *model.Field) error {
@@ -371,7 +370,7 @@ func (ctx *fmtCtx) fmtValue(dst io.Writer, v model.Value) error {
 				buf.Write(ctx.indent())
 				buf.WriteString(field.Name())
 				buf.WriteString(": ")
-				if err := ctx.fmtValue(&buf,field.Value()); err != nil {
+				if err := ctx.fmtValue(&buf, field.Value()); err != nil {
 					return errors.Wrap(err, `failed to format object field value`)
 				}
 			}
@@ -466,10 +465,10 @@ func (ctx *fmtCtx) fmtObjectTypeDefinition(dst io.Writer, v *model.ObjectTypeDef
 	buf.WriteString(" {")
 	err := ctx.enterleave(func() error {
 		for field := range v.Fields() {
-		buf.WriteByte('\n')
-		buf.Write(ctx.indent())
+			buf.WriteByte('\n')
+			buf.Write(ctx.indent())
 			buf.WriteString(field.Name())
-			if err := ctx.fmtArgumentList(&buf, field.Arguments()); err != nil {
+			if err := ctx.fmtObjectTypeDefinitionFieldArgumentList(&buf, field.Arguments()); err != nil {
 				return errors.Wrap(err, `failed to format object field argumets`)
 			}
 			buf.WriteString(": ")
@@ -483,7 +482,55 @@ func (ctx *fmtCtx) fmtObjectTypeDefinition(dst io.Writer, v *model.ObjectTypeDef
 		return err
 	}
 	buf.WriteString("\n}")
-	
+
+	if _, err := buf.WriteTo(dst); err != nil {
+		return errors.Wrap(err, `failed to write to destination`)
+	}
+	return nil
+}
+
+func (ctx *fmtCtx) fmtObjectTypeDefinitionFieldArgument(dst io.Writer, v *model.ObjectTypeDefinitionFieldArgument) error {
+	var buf bytes.Buffer
+	buf.WriteString(v.Name())
+	buf.WriteString(": ")
+	if err := ctx.fmtType(&buf, v.Type()); err != nil {
+		return errors.Wrap(err, `failed to format type`)
+	}
+
+	if v.HasDefaultValue() {
+		buf.WriteString(" = ")
+		if err := ctx.fmtValue(&buf, v.DefaultValue()); err != nil {
+			return errors.Wrap(err, `failed to format default value`)
+		}
+	}
+
+	if _, err := buf.WriteTo(dst); err != nil {
+		return errors.Wrap(err, `failed to write to destination`)
+	}
+	return nil
+}
+
+func (ctx *fmtCtx) fmtObjectTypeDefinitionFieldArgumentList(dst io.Writer, argch chan *model.ObjectTypeDefinitionFieldArgument) error {
+	l := len(argch)
+	if l == 0 {
+		return nil
+	}
+
+	var buf bytes.Buffer
+	buf.WriteByte('(')
+
+	argc := 0
+	for arg := range argch {
+		if err := ctx.fmtObjectTypeDefinitionFieldArgument(&buf, arg); err != nil {
+			return errors.Wrap(err, `failed to format argument`)
+		}
+		if l-1 > argc {
+			buf.WriteString(", ")
+		}
+		argc++
+	}
+	buf.WriteByte(')')
+
 	if _, err := buf.WriteTo(dst); err != nil {
 		return errors.Wrap(err, `failed to write to destination`)
 	}

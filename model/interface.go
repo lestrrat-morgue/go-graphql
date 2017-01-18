@@ -134,13 +134,22 @@ type TypeList []Type
 
 type ObjectTypeDefinition struct {
 	name   string
-	fields ObjectTypeFieldList
+	fields ObjectTypeDefinitionFieldList
 }
-
+// List of ObjectTypeDefinition
 type ObjectTypeDefinitionList []*ObjectTypeDefinition
-type ObjectTypeField struct {
+
+type ObjectTypeDefinitionFieldArgument struct {
+	name            string
+	typ             Type
+	hasDefaultValue bool
+	defaultValue    Value
+}
+type ObjectTypeDefinitionFieldArgumentList []*ObjectTypeDefinitionFieldArgument
+
+type ObjectTypeDefinitionField struct {
 	name      string
 	typ       Type
-	arguments ArgumentList
+	arguments ObjectTypeDefinitionFieldArgumentList
 }
-type ObjectTypeFieldList []*ObjectTypeField
+type ObjectTypeDefinitionFieldList []*ObjectTypeDefinitionField
