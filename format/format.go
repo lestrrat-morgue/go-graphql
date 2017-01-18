@@ -3,6 +3,7 @@ package format
 import (
 	"bytes"
 	"io"
+	"strconv"
 
 	"github.com/lestrrat/go-graphql/model"
 	"github.com/pkg/errors"
@@ -130,7 +131,6 @@ func (ctx *fmtCtx) fmtVariableDefinitionList(dst io.Writer, vdefch chan *model.V
 	if _, err := buf.WriteTo(dst); err != nil {
 		return errors.Wrap(err, `failed to write to destination`)
 	}
-	return nil
 	return nil
 }
 
@@ -341,7 +341,48 @@ func (ctx *fmtCtx) fmtVariableDefinition(dst io.Writer, v *model.VariableDefinit
 }
 
 func (ctx *fmtCtx) fmtValue(dst io.Writer, v model.Value) error {
-	if _, err := dst.Write([]byte(v.String())); err != nil {
+	var buf bytes.Buffer
+
+	switch v.(type) {
+	case *model.Variable, model.Variable:
+		buf.WriteByte('$')
+		buf.WriteString(v.Value().(string))
+	case *model.IntValue, model.IntValue:
+		buf.WriteString(strconv.Itoa(v.Value().(int)))
+	case *model.FloatValue, model.FloatValue:
+		buf.WriteString(strconv.FormatFloat(v.Value().(float64), 'g', -1, 64))
+	case *model.StringValue, model.StringValue:
+		buf.WriteString(v.Value().(string))
+	case *model.BoolValue, model.BoolValue:
+		buf.WriteString(strconv.FormatBool(v.Value().(bool)))
+	case *model.NullValue, model.NullValue:
+		buf.WriteString("null")
+	case *model.EnumValue, model.EnumValue:
+		buf.WriteString(v.Value().(string))
+	case *model.ObjectValue:
+		buf.WriteByte('{')
+		err := ctx.enterleave(func() error {
+			for field := range v.(*model.ObjectValue).Fields() {
+				buf.WriteByte('\n')
+				buf.Write(ctx.indent())
+				buf.WriteString(field.Name())
+				buf.WriteString(": ")
+				if err := ctx.fmtValue(&buf,field.Value()); err != nil {
+					return errors.Wrap(err, `failed to format object field value`)
+				}
+			}
+			return nil
+		})
+		if err != nil {
+			return errors.Wrap(err, `failed to format object`)
+		}
+		buf.WriteByte('\n')
+		buf.Write(ctx.indent())
+		buf.WriteByte('}')
+	default:
+		return errors.New(`unsupported value`)
+	}
+	if _, err := buf.WriteTo(dst); err != nil {
 		return errors.Wrap(err, `failed to write to destination`)
 	}
 	return nil

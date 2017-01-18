@@ -12,8 +12,8 @@ func NewVariable(s string) *Variable {
 	}
 }
 
-func (v Variable) String() string {
-	return "$" + v.name
+func (v Variable) Value() interface{} {
+	return v.name
 }
 
 func NewIntValue(s string) (*IntValue, error) {
@@ -26,8 +26,8 @@ func NewIntValue(s string) (*IntValue, error) {
 	}, nil
 }
 
-func (v IntValue) String() string {
-	return strconv.Itoa(v.value)
+func (v IntValue) Value() interface{} {
+	return v.value
 }
 
 func NewFloatValue(s string) (*FloatValue, error) {
@@ -40,8 +40,8 @@ func NewFloatValue(s string) (*FloatValue, error) {
 	}, nil
 }
 
-func (v FloatValue) String() string {
-	return strconv.FormatFloat(v.value, 'g', -1, 64)
+func (v FloatValue) Value() interface{} {
+	return v.value
 }
 
 func NewStringValue(s string) *StringValue {
@@ -50,7 +50,7 @@ func NewStringValue(s string) *StringValue {
 	}
 }
 
-func (v StringValue) String() string {
+func (v StringValue) Value() interface{} {
 	return v.value
 }
 
@@ -64,12 +64,12 @@ func NewBoolValue(s string) (*BoolValue, error) {
 	}, nil
 }
 
-func (v BoolValue) String() string {
-	return strconv.FormatBool(v.value)
+func (v BoolValue) Value() interface{} {
+	return v.value
 }
 
-func (v NullValue) String() string {
-	return "null"
+func (v NullValue) Value() interface{} {
+	return nil
 }
 
 func NewEnumValue(s string) *EnumValue {
@@ -78,6 +78,51 @@ func NewEnumValue(s string) *EnumValue {
 	}
 }
 
-func (v EnumValue) String() string {
+func (v EnumValue) Value() interface{} {
 	return v.name
+}
+
+func (l *ObjectFieldList) Add(v ...*ObjectField) {
+	*l = append(*l, v...)
+}
+
+func (l ObjectFieldList) Iterator() chan *ObjectField {
+	ch := make(chan *ObjectField, len(l))
+	for _, f := range l {
+		ch <- f
+	}
+	close(ch)
+	return ch
+}
+
+func NewObjectField(name string, value Value) *ObjectField {
+	return &ObjectField{
+		name:  name,
+		value: value,
+	}
+}
+
+func (f ObjectField) Name() string {
+	return f.name
+}
+
+func (f ObjectField) Value() Value {
+	return f.value
+}
+
+func NewObjectValue() *ObjectValue {
+	return &ObjectValue{}
+}
+
+func (o *ObjectValue) Fields() chan *ObjectField {
+	return o.fields.Iterator()
+}
+
+func (o *ObjectValue) AddFields(f ...*ObjectField) {
+	o.fields.Add(f...)
+}
+
+// This doesn't really make sense, but... hmm, revisit
+func (o ObjectValue) Value() interface{} {
+	return nil
 }

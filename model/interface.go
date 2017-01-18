@@ -53,7 +53,7 @@ type VariableDefinition struct {
 type VariableDefinitionList []*VariableDefinition
 
 type Value interface {
-	String() string
+	Value() interface{}
 }
 
 type Variable struct {
@@ -81,6 +81,17 @@ type NullValue struct{}
 type EnumValue struct {
 	name string
 }
+
+type ObjectField struct {
+	name string
+	value Value
+}
+type ObjectFieldList []*ObjectField
+
+type ObjectValue struct {
+	fields ObjectFieldList
+}
+
 type Selection interface{}
 
 type SelectionSet []Selection
@@ -116,3 +127,4 @@ type InlineFragment struct {
 	selections SelectionSet
 	typ        *NamedType
 }
+

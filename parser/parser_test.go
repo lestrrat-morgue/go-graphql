@@ -131,5 +131,11 @@ t.Run(parseSuccess(`query HeroForEpisode($ep: Episode!) {
     }
   }
 }`))
+	t.Run(parseSuccess(`{
+  nearestThing(location: {
+    lon: 12.43
+    lat: -53.211
+  })
+}`))
 }
  

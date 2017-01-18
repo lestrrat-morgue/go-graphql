@@ -110,9 +110,6 @@ func (pctx *parseCtx) next() *Token {
 }
 
 func (pctx *parseCtx) registerType(t *model.NamedType) error {
-	if _, ok := pctx.types[t.Name()]; ok {
-		return errors.Errorf(`type %s already defined`, t.Name())
-	}
 	pctx.types[t.Name()] = t
 	return nil
 }
@@ -429,7 +426,10 @@ func (pctx *parseCtx) parseListType() (model.Type, error) {
 
 	typ, err := pctx.lookupType(t.Value)
 	if err != nil {
-		return nil, errors.Wrapf(err, `failed to lookup type %s`, t.Value)
+		typ = model.NewNamedType(t.Value)
+		if err := pctx.registerType(typ); err != nil {
+			return nil, errors.Wrap(err, `failed to register type`)
+		}
 	}
 
 	return model.NewListType(typ), nil
@@ -446,8 +446,9 @@ func (pctx *parseCtx) parseListType() (model.Type, error) {
 //   ListValue [?Const]
 //   ObjectValue [?Const]
 func (pctx *parseCtx) parseValue() (model.Value, error) {
-	switch t := pctx.next(); t.Type {
+	switch t := pctx.peek(); t.Type {
 	case DOLLAR:
+		pctx.advance()
 		switch t = pctx.next(); t.Type {
 		case NAME:
 			return model.NewVariable(t.Value), nil
@@ -455,12 +456,18 @@ func (pctx *parseCtx) parseValue() (model.Value, error) {
 			return nil, errors.Errorf(`value: expected NAME, got %s`, t.Type)
 		}
 	case INT:
+		pctx.advance()
 		return model.NewIntValue(t.Value)
 	case FLOAT:
+		pctx.advance()
 		return model.NewFloatValue(t.Value)
 	case STRING:
+		pctx.advance()
 		return model.NewStringValue(t.Value), nil
+	case BRACE_L:
+		return pctx.parseObjectValue()
 	case NAME:
+		pctx.advance()
 		switch t.Value {
 		case "true", "false":
 			return model.NewBoolValue(t.Value)
@@ -741,4 +748,61 @@ func (pctx *parseCtx) parseInlineFragment() (*model.InlineFragment, error) {
 	frag.SetTypeCondition(typ)
 
 	return frag, nil
+}
+
+// ObjectValue:
+//   { ObjectField? }
+// ObjectField:
+//   Name : Value
+func (pctx *parseCtx) parseObjectValue() (*model.ObjectValue, error) {
+	switch t := pctx.next(); t.Type {
+	case BRACE_L:
+	default:
+		return nil, unexpectedToken(t, `object value`, BRACE_L)
+	}
+
+	obj := model.NewObjectValue()
+	for loop := true; loop; {
+		switch t := pctx.peek(); t.Type {
+		case BRACE_R:
+			loop = false
+			continue
+		}
+
+		field, err := pctx.parseObjectField()
+		if err != nil {
+			return nil, errors.Wrap(err, `failed to parse object field`)
+		}
+
+		obj.AddFields(field)
+	}
+
+	switch t := pctx.next(); t.Type {
+	case BRACE_R:
+	default:
+		return nil, unexpectedToken(t, `object value`, BRACE_R)
+	}
+	return obj, nil
+}
+
+func (pctx *parseCtx) parseObjectField() (*model.ObjectField, error) {
+	var name string
+	switch t := pctx.next(); t.Type {
+	case NAME:
+		name = t.Value
+	default:
+		return nil, unexpectedToken(t, `object field`, NAME)
+	}
+
+	switch t := pctx.next(); t.Type {
+	case COLON:
+	default:
+		return nil, unexpectedToken(t, `object field`, COLON)
+	}
+
+	v, err := pctx.parseValue()
+	if err != nil {
+		return nil, errors.Wrap(err, `object field: failed to parse value`)
+	}
+	return model.NewObjectField(name, v), nil
 }
