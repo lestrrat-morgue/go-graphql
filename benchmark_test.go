@@ -1,3 +1,5 @@
+// +build bench
+
 package graphql_test
 
 import (
