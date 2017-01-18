@@ -3,7 +3,7 @@
 package parser_test
 
 import (
-	"github.com/lestrrat/graphql/parser"
+	"github.com/lestrrat/go-graphql/parser"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

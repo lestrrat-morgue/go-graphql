@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/lestrrat/graphql/format"
-	"github.com/lestrrat/graphql/parser"
+	"github.com/lestrrat/go-graphql/format"
+	"github.com/lestrrat/go-graphql/parser"
 	"github.com/stretchr/testify/assert"
 )
 

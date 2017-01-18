@@ -3,7 +3,7 @@ package parser
 import (
 	"fmt"
 
-	"github.com/lestrrat/graphql/model"
+	"github.com/lestrrat/go-graphql/model"
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 )

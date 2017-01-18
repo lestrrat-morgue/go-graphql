@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"io"
 
-	"github.com/lestrrat/graphql/model"
+	"github.com/lestrrat/go-graphql/model"
 	"github.com/pkg/errors"
 )
 
