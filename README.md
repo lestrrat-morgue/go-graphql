@@ -9,4 +9,4 @@ GraphQL for Go
 # STATUS
 
 * Can parse query documents
-* TODO: schema, type definitions
+* TODO: schema, interfaces
