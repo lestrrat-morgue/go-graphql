@@ -417,12 +417,15 @@ func (ctx *fmtCtx) fmtNamedType(dst io.Writer, v *model.NamedType) error {
 
 func (ctx *fmtCtx) fmtListType(dst io.Writer, v *model.ListType) error {
 	var buf bytes.Buffer
-	buf.WriteString("[ ")
-	if err := ctx.fmtType(dst, v.Type()); err != nil {
+	buf.WriteByte('[')
+	if err := ctx.fmtType(&buf, v.Type()); err != nil {
 		return errors.Wrap(err, `failed to format type`)
 	}
 
-	buf.WriteString(" ]")
+	buf.WriteByte(']')
+	if !v.IsNullable() {
+		buf.WriteByte('!')
+	}
 	if _, err := buf.WriteTo(dst); err != nil {
 		return errors.Wrap(err, `failed to write to destination`)
 	}

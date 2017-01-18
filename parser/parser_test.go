@@ -147,5 +147,9 @@ t.Run(parseSuccess(`query HeroForEpisode($ep: Episode!) {
   name: String
   picture(size: Int): Url
 }`))
+	t.Run(parseSuccess(`type Character {
+  name: String!
+  appearsIn: [Episode]!
+}`))
 }
  

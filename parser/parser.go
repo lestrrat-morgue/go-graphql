@@ -32,10 +32,14 @@ func syntaxErr(tok *Token, message string, args ...interface{}) error {
 }
 
 func unexpectedToken(tok *Token, message string, expected ...TokenType) error {
-	if len(expected) == 0 {
-		return syntaxErr(tok, "%s: unexpected token %s", message, tok.Type)
+	var value string
+	if len(tok.Value) > 0 {
+		value = " (" + tok.Value + ")"
 	}
-	return syntaxErr(tok, "%s: expected token %s, but got %s", message, expected, tok.Type)
+	if len(expected) == 0 {
+		return syntaxErr(tok, "%s: unexpected token %s%s", message, tok.Type, value)
+	}
+	return syntaxErr(tok, "%s: expected token %s, but got %s%s", message, expected, tok.Type, value)
 }
 
 func (p *Parser) Parse(ctx context.Context, src []byte) (*model.Document, error) {
@@ -430,12 +434,12 @@ func (pctx *parseCtx) parseNamedType() (model.Type, error) {
 func (pctx *parseCtx) parseListType() (model.Type, error) {
 	t := pctx.next()
 	if t.Type != BRACKET_L {
-		return nil, errors.Errorf(`expected '[' for ListType, got %s`, t.Type)
+		return nil, unexpectedToken(t, `list type`, BRACKET_L)
 	}
 
 	t = pctx.next()
 	if t.Type != NAME {
-		return nil, errors.Errorf(`expected Name for ListType, got %s`, t.Type)
+		return nil, unexpectedToken(t, `list type`, NAME)
 	}
 
 	typ, err := pctx.lookupType(t.Value)
@@ -444,6 +448,12 @@ func (pctx *parseCtx) parseListType() (model.Type, error) {
 		if err := pctx.registerType(typ); err != nil {
 			return nil, errors.Wrap(err, `failed to register type`)
 		}
+	}
+
+	switch t := pctx.next(); t.Type {
+	case BRACKET_R:
+	default:
+		return nil, unexpectedToken(t, `list type`, BRACKET_R)
 	}
 
 	return model.NewListType(typ), nil
@@ -894,9 +904,9 @@ func (pctx *parseCtx) parseObjectTypeField() (*model.ObjectTypeField, error) {
 		return nil, unexpectedToken(t, `object field`, COLON)
 	}
 
-	typ, err := pctx.parseNamedType()
+	typ, err := pctx.parseType()
 	if err != nil {
-		return nil, errors.Wrap(err, `object field: failed to parse value`)
+		return nil, errors.Wrap(err, `object field: failed to parse type`)
 	}
 	f := model.NewObjectTypeField(name, typ)
 	f.AddArguments(arguments...)
