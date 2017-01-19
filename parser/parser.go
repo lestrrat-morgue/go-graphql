@@ -42,6 +42,14 @@ func unexpectedToken(tok *Token, message string, expected ...TokenType) error {
 	return syntaxErr(tok, "%s: expected token %s, but got %s%s", message, expected, tok.Type, value)
 }
 
+func unexpectedName(tok *Token, message string, expected ...string) error {
+	// XXX tok must be tok.Type == NAME
+	if len(expected) == 0 {
+		return syntaxErr(tok, "%s: unexpected name %s", message, tok.Value)
+	}
+	return syntaxErr(tok, "%s: expected name %v, but got %s", message, expected, tok.Value)
+}
+
 func (p *Parser) Parse(ctx context.Context, src []byte) (*model.Document, error) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -161,7 +169,7 @@ func (pctx *parseCtx) parseDocument() (*model.Document, error) {
 				}
 				doc.AddDefinitions(typ)
 			default:
-				return nil, syntaxErr(t, `expected query, mutation, fragment`)
+				return nil, unexpectedName(t, `document`, queryKey, mutationKey, fragmentKey, typeKey)
 			}
 		default:
 			return nil, unexpectedToken(t, `document`)

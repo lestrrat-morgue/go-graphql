@@ -10,7 +10,8 @@ import (
 const eof = rune(0)
 
 type Position struct {
-	Line int
+	Offset int
+	Line   int
 	Column int
 }
 
@@ -27,48 +28,49 @@ type lrune struct {
 
 type lexCtx struct {
 	context.Context
-	col int
 	input     []byte
-	line int
 	maxpos    int
 	out       chan *Token
 	peekCount int
 	peekRunes [3]lrune
-	pos       int
-	start     int
+	cur       Position
+	start     Position
 }
 
 func (lctx *lexCtx) emit(tt TokenType) {
-	offset := 0
+	peekOffset := 0
 	for i := 0; i <= lctx.peekCount; i++ {
-		offset += lctx.peekRunes[i].w
+		peekOffset += lctx.peekRunes[i].w
 	}
 
 	if tt != IGNORABLE {
 		var tok Token
 		tok.Type = tt
-		tok.Value = string(lctx.input[lctx.start : lctx.pos-offset])
-		tok.Pos.Line = lctx.line
-		tok.Pos.Column = lctx.col
+		tok.Value = string(lctx.input[lctx.start.Offset : lctx.cur.Offset-peekOffset])
+		tok.Pos.Offset = lctx.start.Offset
+		tok.Pos.Line = lctx.start.Line
+		tok.Pos.Column = lctx.start.Column
 
 		select {
 		case <-lctx.Done():
 		case lctx.out <- &tok:
 		}
 	}
-	lctx.start = lctx.pos - offset
+	lctx.start.Offset = lctx.cur.Offset - peekOffset
+	lctx.start.Line = lctx.cur.Line
+	lctx.start.Column = lctx.cur.Column
 }
 
 func (lctx *lexCtx) advance() {
-  // if the current rune is a new line, we line++
-  switch r := lctx.peek(); r {
-  case '\n':
-    lctx.line++
-    lctx.col = 0
-  case eof:
-  default:
-    lctx.col++
-  }
+	// if the current rune is a new line, we line++
+	switch r := lctx.peek(); r {
+	case '\n':
+		lctx.cur.Line++
+		lctx.cur.Column = 0
+	case eof:
+	default:
+		lctx.cur.Column++
+	}
 
 	lctx.peekCount--
 }
@@ -89,15 +91,15 @@ func (l *lexCtx) peek() rune {
 		return l.peekRunes[l.peekCount].r
 	}
 
-	if l.pos >= l.maxpos {
+	if l.cur.Offset >= l.maxpos {
 		return eof
 	}
 
-	r, w := utf8.DecodeRune(l.input[l.pos:])
+	r, w := utf8.DecodeRune(l.input[l.cur.Offset:])
 	l.peekCount++
 	l.peekRunes[l.peekCount].r = r
 	l.peekRunes[l.peekCount].w = w
-	l.pos += w
+	l.cur.Offset += w
 
 	return r
 }
@@ -109,9 +111,11 @@ func lex(ctx context.Context, src []byte, ch chan *Token) {
 	lctx.Context = ctx
 	lctx.out = ch
 	lctx.input = src
-	lctx.line = 1
 	lctx.maxpos = len(src)
-	lctx.pos = 0
+	lctx.cur.Offset = 0
+	lctx.cur.Line = 1
+	lctx.cur.Column = 1
+	lctx.start = lctx.cur
 	lctx.peekCount = -1
 
 	for {
