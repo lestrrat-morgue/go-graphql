@@ -133,9 +133,12 @@ type InlineFragment struct {
 type TypeList []Type
 
 type ObjectTypeDefinition struct {
-	name   string
-	fields ObjectTypeDefinitionFieldList
+	name          string
+	fields        ObjectTypeDefinitionFieldList
+	hasImplements bool
+	implements    string
 }
+
 // List of ObjectTypeDefinition
 type ObjectTypeDefinitionList []*ObjectTypeDefinition
 
@@ -155,7 +158,7 @@ type ObjectTypeDefinitionField struct {
 type ObjectTypeDefinitionFieldList []*ObjectTypeDefinitionField
 
 type EnumDefinition struct {
-	name string
+	name     string
 	elements EnumElementList
 }
 
@@ -163,3 +166,15 @@ type EnumElement struct {
 	name string
 }
 type EnumElementList []*EnumElement
+
+type InterfaceDefinition struct {
+	name   string
+	fields InterfaceFieldList
+}
+
+type InterfaceField struct {
+	name string
+	typ  Type
+}
+
+type InterfaceFieldList []*InterfaceField

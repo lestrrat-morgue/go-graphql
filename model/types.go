@@ -122,6 +122,19 @@ func NewObjectTypeDefinitionField(name string, typ Type) *ObjectTypeDefinitionFi
 	}
 }
 
+func (t *ObjectTypeDefinition) SetImplements(n string) {
+	t.hasImplements = true
+	t.implements = n
+}
+
+func (t ObjectTypeDefinition) HasImplements() bool {
+	return t.hasImplements
+}
+
+func (t ObjectTypeDefinition) Implements() string {
+	return t.implements
+}
+
 func (t ObjectTypeDefinitionField) Name() string {
 	return t.name
 }
@@ -173,8 +186,55 @@ func (e *EnumElementList) Add(list ...*EnumElement) {
 func (e EnumElementList) Iterator() chan *EnumElement {
 	ch := make(chan *EnumElement, len(e))
 	for _, el := range e {
-		ch <-el
+		ch <- el
 	}
 	close(ch)
 	return ch
 }
+
+func NewInterfaceDefinition(name string) *InterfaceDefinition {
+	return &InterfaceDefinition{
+		name: name,
+	}
+}
+
+func (iface InterfaceDefinition) Name() string {
+	return iface.name
+}
+
+func (iface InterfaceDefinition) Fields() chan *InterfaceField {
+	return iface.fields.Iterator()
+}
+
+func (iface *InterfaceDefinition) AddFields(list ...*InterfaceField) {
+	iface.fields.Add(list...)
+}
+
+func NewInterfaceField(name string, typ Type) *InterfaceField {
+	return &InterfaceField {
+		name: name,
+		typ: typ,
+	}
+}
+
+func (f *InterfaceField) Name() string {
+	return f.name
+}
+
+func (f *InterfaceField) Type() Type {
+	return f.typ
+}
+
+func (f *InterfaceFieldList) Add(list ...*InterfaceField) {
+	*f = append(*f, list...)
+}
+
+func (f InterfaceFieldList) Iterator() chan *InterfaceField {
+	ch := make(chan *InterfaceField, len(f))
+	for _, field := range f {
+		ch <- field
+	}
+	close(ch)
+	return ch
+}
+

@@ -66,6 +66,10 @@ func (ctx *fmtCtx) fmtDocument(dst io.Writer, v *model.Document) error {
 			if err := ctx.fmtObjectTypeDefinition(&buf, def.(*model.ObjectTypeDefinition)); err != nil {
 				return errors.Wrap(err, `failed to format object type definition`)
 			}
+		case *model.InterfaceDefinition:
+			if err := ctx.fmtInterfaceDefinition(&buf, def.(*model.InterfaceDefinition)); err != nil {
+				return errors.Wrap(err, `failed to format object type definition`)
+			}
 		case *model.EnumDefinition:
 			if err := ctx.fmtEnumDefinition(&buf, def.(*model.EnumDefinition)); err != nil {
 				return errors.Wrap(err, `failed to format enum definition`)
@@ -466,6 +470,10 @@ func (ctx *fmtCtx) fmtObjectTypeDefinition(dst io.Writer, v *model.ObjectTypeDef
 	var buf bytes.Buffer
 	buf.WriteString("type ")
 	buf.WriteString(v.Name())
+	if v.HasImplements() {
+		buf.WriteString(" implements ")
+		buf.WriteString(v.Implements())
+	}
 	buf.WriteString(" {")
 	err := ctx.enterleave(func() error {
 		for field := range v.Fields() {
@@ -573,3 +581,46 @@ func (ctx *fmtCtx) fmtEnumElementList(dst io.Writer, ech chan *model.EnumElement
 	}
 	return nil
 }
+
+func (ctx *fmtCtx) fmtInterfaceDefinition(dst io.Writer, v *model.InterfaceDefinition) error {
+	var buf bytes.Buffer
+
+	buf.WriteString("interface ")
+	buf.WriteString(v.Name())
+	buf.WriteString(" {")
+	err := ctx.enterleave(func() error {
+		for f := range v.Fields() {
+			buf.WriteByte('\n')
+			buf.Write(ctx.indent())
+			if err := ctx.fmtInterfaceDefinitionField(&buf, f); err != nil {
+				return errors.Wrap(err, `failed to format interface field`)
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	buf.WriteString("\n}")
+	if _, err := buf.WriteTo(dst); err != nil {
+		return errors.Wrap(err, `failed to write to destination`)
+	}
+	return nil
+}
+
+func (ctx *fmtCtx) fmtInterfaceDefinitionField(dst io.Writer, v *model.InterfaceField) error {
+	var buf bytes.Buffer
+
+	buf.WriteString(v.Name())
+	buf.WriteString(": ")
+	if err := ctx.fmtType(&buf, v.Type()); err != nil {
+		return errors.Wrap(err, `failed to format field type`)
+	}
+
+	if _, err := buf.WriteTo(dst); err != nil {
+		return errors.Wrap(err, `failed to write to destination`)
+	}
+	return nil
+}
+
+

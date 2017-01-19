@@ -9,12 +9,14 @@ import (
 )
 
 const (
-	queryKey    = "query"
-	mutationKey = "mutation"
-	fragmentKey = "fragment"
-	onKey       = "on"
-	typeKey     = "type"
-	enumKey     = "enum"
+	queryKey      = "query"
+	mutationKey   = "mutation"
+	fragmentKey   = "fragment"
+	onKey         = "on"
+	typeKey       = "type"
+	enumKey       = "enum"
+	interfaceKey  = "interface"
+	implementsKey = "implements"
 )
 
 type Parser struct{}
@@ -49,6 +51,42 @@ func unexpectedName(tok *Token, message string, expected ...string) error {
 		return syntaxErr(tok, "%s: unexpected name %s", message, tok.Value)
 	}
 	return syntaxErr(tok, "%s: expected name %v, but got %s", message, expected, tok.Value)
+}
+
+func consumeToken(pctx *parseCtx, typ TokenType) (*Token, error) {
+	switch t := pctx.next(); t.Type {
+	case typ:
+		return t, nil
+	default:
+		return nil, syntaxErr(t, `expected token %s, got %s`, typ, t.Type)
+	}
+}
+
+func consumeName(pctx *parseCtx, names ...string) (string, error) {
+	t, err := consumeToken(pctx, NAME)
+	if err != nil {
+		return "", err
+	}
+
+	if len(names) == 0 { // any name is fine
+		return t.Value, nil
+	}
+
+	for _, name := range names {
+		if t.Value == name {
+			return t.Value, nil
+		}
+	}
+	return "", syntaxErr(t, `expected name %v, got %s`, names, t.Value)
+}
+
+func peekName(pctx *parseCtx, name string) bool {
+	switch t := pctx.peek(); t.Type {
+	case NAME:
+		return t.Value == name
+	default:
+		return false
+	}
 }
 
 func (p *Parser) Parse(ctx context.Context, src []byte) (*model.Document, error) {
@@ -175,8 +213,14 @@ func (pctx *parseCtx) parseDocument() (*model.Document, error) {
 					return nil, errors.Wrap(err, `failed to parse enum definition`)
 				}
 				doc.AddDefinitions(enum)
+			case interfaceKey:
+				iface, err := pctx.parseInterfaceDefinition()
+				if err != nil {
+					return nil, errors.Wrap(err, `failed to parse interface definition`)
+				}
+				doc.AddDefinitions(iface)
 			default:
-				return nil, unexpectedName(t, `document`, queryKey, mutationKey, fragmentKey, typeKey, enumKey)
+				return nil, unexpectedName(t, `document`, queryKey, mutationKey, fragmentKey, typeKey, enumKey, interfaceKey)
 			}
 		default:
 			return nil, unexpectedToken(t, `document`)
@@ -848,30 +892,32 @@ func (pctx *parseCtx) parseObjectField() (*model.ObjectField, error) {
 }
 
 func (pctx *parseCtx) parseObjectTypeDefinition() (*model.ObjectTypeDefinition, error) {
-	switch t := pctx.next(); t.Type {
-	case NAME:
-		if t.Value != typeKey {
-			return nil, syntaxErr(t, `object type: expected "type", got %s`, t.Value)
+	if _, err := consumeName(pctx, typeKey); err != nil {
+		return nil, errors.Wrap(err, `object type`)
+	}
+
+	name, err := consumeName(pctx)
+	if err != nil {
+		return nil, errors.Wrap(err, `object type`)
+	}
+
+	var implName string
+	if peekName(pctx, implementsKey) {
+		if _, err := consumeName(pctx, implementsKey); err != nil {
+			return nil, errors.Wrap(err, `object type`)
 		}
-	default:
-		return nil, unexpectedToken(t, `object type`, NAME)
+
+		implName, err = consumeName(pctx)
+		if err != nil {
+			return nil, errors.Wrap(err, `object type`)
+		}
 	}
 
-	var name string
-	switch t := pctx.next(); t.Type {
-	case NAME:
-		name = t.Value
-	default:
-		return nil, unexpectedToken(t, `object type`, NAME)
+	if _, err := consumeToken(pctx, BRACE_L); err != nil {
+		return nil, errors.Wrap(err, `object type`)
 	}
 
-	switch t := pctx.next(); t.Type {
-	case BRACE_L:
-	default:
-		return nil, unexpectedToken(t, `object type`, BRACE_L)
-	}
-
-	def := model.NewObjectTypeDefinition(name)
+	var fields []*model.ObjectTypeDefinitionField
 	for loop := true; loop; {
 		switch t := pctx.peek(); t.Type {
 		case BRACE_R:
@@ -883,7 +929,7 @@ func (pctx *parseCtx) parseObjectTypeDefinition() (*model.ObjectTypeDefinition, 
 		if err != nil {
 			return nil, errors.Wrap(err, `failed to parse object type field`)
 		}
-		def.AddFields(field)
+		fields = append(fields, field)
 	}
 
 	switch t := pctx.next(); t.Type {
@@ -892,6 +938,11 @@ func (pctx *parseCtx) parseObjectTypeDefinition() (*model.ObjectTypeDefinition, 
 		return nil, unexpectedToken(t, `object type`, BRACE_R)
 	}
 
+	def := model.NewObjectTypeDefinition(name)
+	def.AddFields(fields...)
+	if len(implName) > 0 {
+		def.SetImplements(implName)
+	}
 	return def, nil
 }
 
@@ -1036,4 +1087,59 @@ func (pctx *parseCtx) parseEnumDefinition() (*model.EnumDefinition, error) {
 	def := model.NewEnumDefinition(name)
 	def.AddElements(elements...)
 	return def, nil
+}
+
+func (pctx *parseCtx) parseInterfaceDefinition() (*model.InterfaceDefinition, error) {
+	if _, err := consumeName(pctx, interfaceKey); err != nil {
+		return nil, errors.Wrap(err, `interface`)
+	}
+
+	name, err := consumeName(pctx)
+	if err != nil {
+		return nil, errors.Wrap(err, `interface`)
+	}
+
+	if _, err := consumeToken(pctx, BRACE_L); err != nil {
+		return nil, errors.Wrap(err, `interface`)
+	}
+
+	var fields []*model.InterfaceField
+	for loop := true; loop; {
+		switch t := pctx.peek(); t.Type {
+		case BRACE_R:
+			loop = false
+			continue
+		}
+
+		field, err := pctx.parseInterfaceDefinitionField()
+		if err != nil {
+			return nil, errors.Wrap(err, `interface`)
+		}
+		fields = append(fields, field)
+	}
+
+	if _, err := consumeToken(pctx, BRACE_R); err != nil {
+		return nil, errors.Wrap(err, `interface`)
+	}
+	iface := model.NewInterfaceDefinition(name)
+	iface.AddFields(fields...)
+	return iface, nil
+}
+
+func (pctx *parseCtx) parseInterfaceDefinitionField() (*model.InterfaceField, error) {
+	name, err := consumeName(pctx)
+	if err != nil {
+		return nil, errors.Wrap(err, `interface field`)
+	}
+
+	if _, err := consumeToken(pctx, COLON); err != nil {
+		return nil, errors.Wrap(err, `interface field`)
+	}
+
+	typ, err := pctx.parseType()
+	if err != nil {
+		return nil, errors.Wrap(err, `interface field`)
+	}
+
+	return model.NewInterfaceField(name, typ), nil
 }

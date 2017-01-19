@@ -18,9 +18,9 @@ GraphQL for Go
 * Type Definitions
   * Object
   * Enum
+  * Interface
 
 ## PARSING (TODO)
 
 * Type Definitions
   * schema
-  * interfaces
