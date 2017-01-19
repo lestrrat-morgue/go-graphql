@@ -153,3 +153,13 @@ type ObjectTypeDefinitionField struct {
 	arguments ObjectTypeDefinitionFieldArgumentList
 }
 type ObjectTypeDefinitionFieldList []*ObjectTypeDefinitionField
+
+type EnumDefinition struct {
+	name string
+	elements EnumElementList
+}
+
+type EnumElement struct {
+	name string
+}
+type EnumElementList []*EnumElement

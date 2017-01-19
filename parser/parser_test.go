@@ -156,5 +156,14 @@ t.Run(parseSuccess(`query HeroForEpisode($ep: Episode!) {
   name: String!
   length(unit: LengthUnit = METER): Float
 }`))
+	t.Run(parseSuccess(`type Query {
+  hero(episode: Episode): Character
+  droid(id: ID!): Droid
+}`))
+	t.Run(parseSuccess(`enum Episode {
+  NEWHOPE
+  EMPIRE
+  JEDI
+}`))
 }
  

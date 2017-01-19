@@ -66,6 +66,10 @@ func (ctx *fmtCtx) fmtDocument(dst io.Writer, v *model.Document) error {
 			if err := ctx.fmtObjectTypeDefinition(&buf, def.(*model.ObjectTypeDefinition)); err != nil {
 				return errors.Wrap(err, `failed to format object type definition`)
 			}
+		case *model.EnumDefinition:
+			if err := ctx.fmtEnumDefinition(&buf, def.(*model.EnumDefinition)); err != nil {
+				return errors.Wrap(err, `failed to format enum definition`)
+			}
 		}
 	}
 
@@ -531,6 +535,39 @@ func (ctx *fmtCtx) fmtObjectTypeDefinitionFieldArgumentList(dst io.Writer, argch
 	}
 	buf.WriteByte(')')
 
+	if _, err := buf.WriteTo(dst); err != nil {
+		return errors.Wrap(err, `failed to write to destination`)
+	}
+	return nil
+}
+
+func (ctx *fmtCtx) fmtEnumDefinition(dst io.Writer, v *model.EnumDefinition) error {
+	var buf bytes.Buffer
+	buf.WriteString("enum ")
+	buf.WriteString(v.Name())
+	buf.WriteString(" {")
+	err := ctx.enterleave(func() error {
+		return errors.Wrap(ctx.fmtEnumElementList(&buf, v.Elements()), `failed to format enum element`)
+	})
+	if err != nil  {
+		return err
+	}
+	buf.WriteString("\n}")
+
+	if _, err := buf.WriteTo(dst); err != nil {
+		return errors.Wrap(err, `failed to write to destination`)
+	}
+	return nil
+
+}
+
+func (ctx *fmtCtx) fmtEnumElementList(dst io.Writer, ech chan *model.EnumElement) error {
+	var buf bytes.Buffer
+	for e := range ech {
+		buf.WriteByte('\n')
+		buf.Write(ctx.indent())
+		buf.WriteString(e.Name())
+	}
 	if _, err := buf.WriteTo(dst); err != nil {
 		return errors.Wrap(err, `failed to write to destination`)
 	}

@@ -14,6 +14,7 @@ const (
 	fragmentKey = "fragment"
 	onKey       = "on"
 	typeKey     = "type"
+	enumKey     = "enum"
 )
 
 type Parser struct{}
@@ -168,8 +169,14 @@ func (pctx *parseCtx) parseDocument() (*model.Document, error) {
 					return nil, errors.Wrap(err, `failed to parse object type definition`)
 				}
 				doc.AddDefinitions(typ)
+			case enumKey:
+				enum, err := pctx.parseEnumDefinition()
+				if err != nil {
+					return nil, errors.Wrap(err, `failed to parse enum definition`)
+				}
+				doc.AddDefinitions(enum)
 			default:
-				return nil, unexpectedName(t, `document`, queryKey, mutationKey, fragmentKey, typeKey)
+				return nil, unexpectedName(t, `document`, queryKey, mutationKey, fragmentKey, typeKey, enumKey)
 			}
 		default:
 			return nil, unexpectedToken(t, `document`)
@@ -708,7 +715,6 @@ func (pctx *parseCtx) parseArguments() (model.ArgumentList, error) {
 			return nil, errors.Wrap(err, `failed to parse value`)
 		}
 
-
 		args = append(args, model.NewArgument(name, value))
 
 	}
@@ -850,7 +856,7 @@ func (pctx *parseCtx) parseObjectTypeDefinition() (*model.ObjectTypeDefinition, 
 	default:
 		return nil, unexpectedToken(t, `object type`, NAME)
 	}
-	
+
 	var name string
 	switch t := pctx.next(); t.Type {
 	case NAME:
@@ -980,4 +986,54 @@ func (pctx *parseCtx) parseObjectTypeDefinitionFieldArguments() (model.ObjectTyp
 	}
 
 	return args, nil
+}
+
+func (pctx *parseCtx) parseEnumDefinition() (*model.EnumDefinition, error) {
+	switch t := pctx.next(); t.Type {
+	case NAME:
+		if t.Value != enumKey {
+			return nil, unexpectedName(t, `enum`, enumKey)
+		}
+	default:
+		return nil, unexpectedToken(t, `enum`, NAME)
+	}
+
+	var name string
+	switch t := pctx.next(); t.Type {
+	case NAME:
+		name = t.Value
+		// check for valid name
+	default:
+		return nil, unexpectedToken(t, `enum`, NAME)
+	}
+
+	switch t := pctx.next(); t.Type {
+	case BRACE_L:
+	default:
+		return nil, unexpectedToken(t, `enum`, BRACE_L)
+	}
+
+	var elements []*model.EnumElement
+	for loop := true; loop; {
+		switch t := pctx.peek(); t.Type {
+		case BRACE_R:
+			loop = false
+			continue
+		case NAME:
+			pctx.advance()
+			elements = append(elements, model.NewEnumElement(t.Value))
+		default:
+			return nil, unexpectedToken(t, `enum`, NAME)
+		}
+	}
+
+	switch t := pctx.next(); t.Type {
+	case BRACE_R:
+	default:
+		return nil, unexpectedToken(t, `enum`, BRACE_R)
+	}
+
+	def := model.NewEnumDefinition(name)
+	def.AddElements(elements...)
+	return def, nil
 }

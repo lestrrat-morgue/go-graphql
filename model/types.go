@@ -137,3 +137,44 @@ func (t *ObjectTypeDefinitionField) AddArguments(list ...*ObjectTypeDefinitionFi
 func (t ObjectTypeDefinitionField) Arguments() chan *ObjectTypeDefinitionFieldArgument {
 	return t.arguments.Iterator()
 }
+
+func NewEnumDefinition(name string) *EnumDefinition {
+	return &EnumDefinition{
+		name: name,
+	}
+}
+
+func (t *EnumDefinition) Name() string {
+	return t.name
+}
+
+func (t *EnumDefinition) AddElements(list ...*EnumElement) {
+	t.elements.Add(list...)
+}
+
+func (t *EnumDefinition) Elements() chan *EnumElement {
+	return t.elements.Iterator()
+}
+
+func NewEnumElement(s string) *EnumElement {
+	return &EnumElement{
+		name: s,
+	}
+}
+
+func (e *EnumElement) Name() string {
+	return e.name
+}
+
+func (e *EnumElementList) Add(list ...*EnumElement) {
+	*e = append(*e, list...)
+}
+
+func (e EnumElementList) Iterator() chan *EnumElement {
+	ch := make(chan *EnumElement, len(e))
+	for _, el := range e {
+		ch <-el
+	}
+	close(ch)
+	return ch
+}
