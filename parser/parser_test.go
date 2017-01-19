@@ -165,5 +165,33 @@ t.Run(parseSuccess(`query HeroForEpisode($ep: Episode!) {
   EMPIRE
   JEDI
 }`))
+	t.Run(parseSuccess(`query DroidById($id: ID!) {
+  droid(id: $id) {
+    name
+  }
+}`))
+	t.Run(parseSuccess(`interface Character {
+  id: ID!
+  name: String!
+  friends: [Character]
+  appearsIn: [Episode]!
+}
+
+type Human implements Character {
+  id: ID!
+  name: String!
+  friends: [Character]
+  appearsIn: [Episode]!
+  starships: [Starship]
+  totalCredits: Int
+}
+
+type Droid implements Character {
+  id: ID!
+  name: String!
+  friends: [Character]
+  appearsIn: [Episode]!
+  primaryFunction: String
+}`))
 }
  
