@@ -20,8 +20,19 @@ GraphQL for Go
   * Enum
   * Interface
   * Union
+  * Input
 
 ## PARSING (TODO)
 
 * Type Definitions
   * schema
+
+## BENCHMARK
+
+```
+% go test -tags bench -benchmem -bench .
+BenchmarkParseOfficial-4       10000        100539 ns/op       41000 B/op       1147 allocs/op
+BenchmarkParseLestrrat-4       20000         73134 ns/op       15453 B/op        583 allocs/op
+PASS
+ok      github.com/lestrrat/go-graphql  3.262s
+```

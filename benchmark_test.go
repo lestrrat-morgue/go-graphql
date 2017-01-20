@@ -137,7 +137,7 @@ type Person2 {
   picture(size: Int): Url
 }`
 
-func BenchmarkOfficial(b *testing.B) {
+func BenchmarkParseOfficial(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		_, err := official.Parse(official.ParseParams{
 			Source: &source.Source{
@@ -152,7 +152,7 @@ func BenchmarkOfficial(b *testing.B) {
 	}
 }
 
-func BenchmarkLestrrat(b *testing.B) {
+func BenchmarkParseLestrrat(b *testing.B) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	p := lestrrat.New()
