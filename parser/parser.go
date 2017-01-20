@@ -109,12 +109,10 @@ func (p *Parser) Parse(ctx context.Context, src []byte) (*model.Document, error)
 
 	var pctx parseCtx
 	pctx.Context = ctx
-	pctx.lexsrc = make(chan *Token, 256)
+	pctx.lexsrc = NewLexer(src)
 	pctx.peekCount = -1
-	pctx.peekTokens = [3]*Token{}
+	pctx.peekTokens = [3]Token{}
 	pctx.types = make(map[string]*model.NamedType)
-
-	go lex(ctx, src, pctx.lexsrc)
 
 	doc, err := pctx.parseDocument()
 	if err != nil {
@@ -126,9 +124,9 @@ func (p *Parser) Parse(ctx context.Context, src []byte) (*model.Document, error)
 type parseCtx struct {
 	context.Context
 
-	lexsrc     chan *Token
+	lexsrc     *Lexer
 	peekCount  int
-	peekTokens [3]*Token
+	peekTokens [3]Token
 	types      map[string]*model.NamedType
 }
 
@@ -146,15 +144,14 @@ func (pctx *parseCtx) peek() *Token {
 		select {
 		case <-pctx.Context.Done():
 			return &eofToken
-		case t, ok := <-pctx.lexsrc:
-			if !ok {
-				return &eofToken
-			}
-			pctx.peekCount++
-			pctx.peekTokens[pctx.peekCount] = t
+		default:
 		}
+		if !pctx.lexsrc.Next(&pctx.peekTokens[pctx.peekCount+1]) {
+			return &eofToken
+		}
+		pctx.peekCount++
 	}
-	return pctx.peekTokens[pctx.peekCount]
+	return &pctx.peekTokens[pctx.peekCount]
 }
 
 func (pctx *parseCtx) advance() {
@@ -528,12 +525,11 @@ func (pctx *parseCtx) parseValue() (model.Value, error) {
 	switch t := pctx.peek(); t.Type {
 	case DOLLAR:
 		pctx.advance()
-		switch t = pctx.next(); t.Type {
-		case NAME:
-			return model.NewVariable(t.Value), nil
-		default:
-			return nil, errors.Errorf(`value: expected NAME, got %s`, t.Type)
+		name, err := consumeName(pctx)
+		if err != nil {
+			return nil, errors.Wrap(err, `value`)
 		}
+		return model.NewVariable(name), nil
 	case INT:
 		pctx.advance()
 		return model.NewIntValue(t.Value)
@@ -547,13 +543,15 @@ func (pctx *parseCtx) parseValue() (model.Value, error) {
 		return pctx.parseObjectValue()
 	case NAME:
 		pctx.advance()
-		switch t.Value {
+		name := t.Value
+
+		switch name {
 		case trueKey, falseKey:
-			return model.NewBoolValue(t.Value)
+			return model.NewBoolValue(name)
 		case nullKey:
 			return model.NullValue{}, nil
 		default:
-			return model.NewEnumValue(t.Value), nil
+			return model.NewEnumValue(name), nil
 		}
 	default:
 		return nil, errors.Errorf(`value: unexpected token %s`, t.Type)
@@ -1158,5 +1156,3 @@ func (pctx *parseCtx) parseInputDefinitionField() (*model.InputFieldDefinition, 
 	def.SetType(typ)
 	return def, nil
 }
-
-

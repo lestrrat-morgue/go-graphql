@@ -3,8 +3,6 @@ package parser
 import (
 	"unicode"
 	"unicode/utf8"
-
-	"golang.org/x/net/context"
 )
 
 const eof = rune(0)
@@ -26,67 +24,65 @@ type lrune struct {
 	w int
 }
 
-type lexCtx struct {
-	context.Context
+type Lexer struct {
 	input     []byte
 	maxpos    int
-	out       chan *Token
 	peekCount int
 	peekRunes [3]lrune
 	cur       Position
 	start     Position
 }
 
-func (lctx *lexCtx) emit(tt TokenType) {
+func (l *Lexer) emit(tok *Token, tt TokenType) bool {
 	peekOffset := 0
-	for i := 0; i <= lctx.peekCount; i++ {
-		peekOffset += lctx.peekRunes[i].w
+	for i := 0; i <= l.peekCount; i++ {
+		peekOffset += l.peekRunes[i].w
 	}
 
 	if tt != IGNORABLE {
-		var tok Token
 		tok.Type = tt
-		tok.Value = string(lctx.input[lctx.start.Offset : lctx.cur.Offset-peekOffset])
-		tok.Pos.Offset = lctx.start.Offset
-		tok.Pos.Line = lctx.start.Line
-		tok.Pos.Column = lctx.start.Column
-
-		select {
-		case <-lctx.Done():
-		case lctx.out <- &tok:
-		}
+		tok.Value = string(l.input[l.start.Offset : l.cur.Offset-peekOffset])
+		tok.Pos.Offset = l.start.Offset
+		tok.Pos.Line = l.start.Line
+		tok.Pos.Column = l.start.Column
 	}
-	lctx.start.Offset = lctx.cur.Offset - peekOffset
-	lctx.start.Line = lctx.cur.Line
-	lctx.start.Column = lctx.cur.Column
+
+	l.start.Offset = l.cur.Offset - peekOffset
+	l.start.Line = l.cur.Line
+	l.start.Column = l.cur.Column
+
+	if tt == IGNORABLE {
+		return false
+	}
+	return true
 }
 
-func (lctx *lexCtx) advance() {
+func (l *Lexer) advance() {
 	// if the current rune is a new line, we line++
-	switch r := lctx.peek(); r {
+	switch r := l.peek(); r {
 	case '\n':
-		lctx.cur.Line++
-		lctx.cur.Column = 0
+		l.cur.Line++
+		l.cur.Column = 0
 	case eof:
 	default:
-		lctx.cur.Column++
+		l.cur.Column++
 	}
 
-	lctx.peekCount--
+	l.peekCount--
 }
 
 // becareful, we don't check for peekCount
-func (l *lexCtx) rewind() {
+func (l *Lexer) rewind() {
 	l.peekCount++
 }
 
-func (l *lexCtx) next() rune {
+func (l *Lexer) next() rune {
 	r := l.peek()
 	l.advance()
 	return r
 }
 
-func (l *lexCtx) peek() rune {
+func (l *Lexer) peek() rune {
 	if l.peekCount >= 0 {
 		return l.peekRunes[l.peekCount].r
 	}
@@ -104,182 +100,175 @@ func (l *lexCtx) peek() rune {
 	return r
 }
 
-func lex(ctx context.Context, src []byte, ch chan *Token) {
-	defer close(ch)
-
-	var lctx lexCtx
-	lctx.Context = ctx
-	lctx.out = ch
-	lctx.input = src
-	lctx.maxpos = len(src)
-	lctx.cur.Offset = 0
-	lctx.cur.Line = 1
-	lctx.cur.Column = 1
-	lctx.start = lctx.cur
-	lctx.peekCount = -1
-
-	for {
-		select {
-		case <-lctx.Done():
-			return
-		default:
-		}
-
-		lctx.skipInsignificant()
-
-		switch t := lctx.peek(); t {
-		case eof:
-			lctx.emit(EOF)
-			return
-		case '!':
-			lctx.advance()
-			lctx.emit(BANG)
-		case '$':
-			lctx.advance()
-			lctx.emit(DOLLAR)
-		case '(':
-			lctx.advance()
-			lctx.emit(PAREN_L)
-		case ')':
-			lctx.advance()
-			lctx.emit(PAREN_R)
-		case ':':
-			lctx.advance()
-			lctx.emit(COLON)
-		case '=':
-			lctx.advance()
-			lctx.emit(EQUALS)
-		case '@':
-			lctx.advance()
-			lctx.emit(AT)
-		case '[':
-			lctx.advance()
-			lctx.emit(BRACKET_L)
-		case ']':
-			lctx.advance()
-			lctx.emit(BRACKET_R)
-		case '{':
-			lctx.advance()
-			lctx.emit(BRACE_L)
-		case '|':
-			lctx.advance()
-			lctx.emit(PIPE)
-		case '}':
-			lctx.advance()
-			lctx.emit(BRACE_R)
-		case '.':
-			if !lctx.runSpread() {
-				lctx.emit(ILLEGAL)
-				return
-			}
-			lctx.emit(SPREAD)
-		case '"':
-			if !lctx.runString() {
-				lctx.emit(ILLEGAL)
-				return
-			}
-			lctx.emit(STRING)
-		default:
-			if !lctx.lexValue() {
-				lctx.emit(ILLEGAL)
-			}
-		}
-	}
+func NewLexer(src []byte) *Lexer {
+	l := &Lexer{}
+	l.input = src
+	l.maxpos = len(src)
+	l.cur.Offset = 0
+	l.cur.Line = 1
+	l.cur.Column = 1
+	l.start = l.cur
+	l.peekCount = -1
+	return l
 }
 
-func (lctx *lexCtx) lexValue() bool {
-	r := lctx.peek()
+func (l *Lexer) Next(tok *Token) bool {
+	l.skipInsignificant()
+
+	switch t := l.peek(); t {
+	case eof:
+		return l.emit(tok, EOF)
+	case '!':
+		l.advance()
+		return l.emit(tok, BANG)
+	case '$':
+		l.advance()
+		return l.emit(tok, DOLLAR)
+	case '(':
+		l.advance()
+		return l.emit(tok, PAREN_L)
+	case ')':
+		l.advance()
+		return l.emit(tok, PAREN_R)
+	case ':':
+		l.advance()
+		return l.emit(tok, COLON)
+	case '=':
+		l.advance()
+		return l.emit(tok, EQUALS)
+	case '@':
+		l.advance()
+		return l.emit(tok, AT)
+	case '[':
+		l.advance()
+		return l.emit(tok, BRACKET_L)
+	case ']':
+		l.advance()
+		return l.emit(tok, BRACKET_R)
+	case '{':
+		l.advance()
+		return l.emit(tok, BRACE_L)
+	case '|':
+		l.advance()
+		return l.emit(tok, PIPE)
+	case '}':
+		l.advance()
+		return l.emit(tok, BRACE_R)
+	case '.':
+		if !l.runSpread() {
+			return l.emit(tok, ILLEGAL)
+		}
+		return l.emit(tok, SPREAD)
+	case '"':
+		if !l.runString() {
+			return l.emit(tok, ILLEGAL)
+		}
+		return l.emit(tok, STRING)
+	default:
+		typ, ok := l.lexValue()
+		if !ok {
+			return l.emit(tok, ILLEGAL)
+		}
+		return l.emit(tok, typ)
+	}
+	return l.emit(tok, ILLEGAL)
+}
+
+func (l *Lexer) lexValue() (TokenType, bool) {
+	r := l.peek()
 	switch {
 	case unicode.IsDigit(r):
-		return lctx.lexNumber()
+		return l.lexNumber()
 	case r == '-' || r == '+':
-		lctx.advance()
-		if unicode.IsDigit(lctx.peek()) {
-			lctx.rewind()
-			return lctx.lexNumber()
+		l.advance()
+		if unicode.IsDigit(l.peek()) {
+			l.rewind()
+			return l.lexNumber()
 		}
-		return false
+		return ILLEGAL, false
 	case r == '"':
-		return lctx.lexString()
+		return l.lexString()
 	default:
-		if !lctx.runName() {
-			return false
+		if !l.runName() {
+			return ILLEGAL, false
 		}
-		lctx.emit(NAME)
-		return true
+		return NAME, true
 	}
 }
 
-func (lctx *lexCtx) runDigits() bool {
-	if !unicode.IsDigit(lctx.next()) {
+func (l *Lexer) runDigits() bool {
+	if !unicode.IsDigit(l.next()) {
 		return false
 	}
 
-	for unicode.IsDigit(lctx.peek()) {
-		lctx.advance()
+	for unicode.IsDigit(l.peek()) {
+		l.advance()
 	}
 	return true
 }
 
-func (lctx *lexCtx) lexString() bool {
-	return false
+func (l *Lexer) lexString() (TokenType, bool) {
+	if !l.runString() {
+		return ILLEGAL, false
+	}
+
+	return STRING, true
 }
 
-func (lctx *lexCtx) lexNumber() bool {
-	r := lctx.next()
+func (l *Lexer) lexNumber() (TokenType, bool) {
+	r := l.next()
 	switch r {
 	case '-', '+':
-		r = lctx.next()
+		r = l.next()
 	}
 
 	var typ TokenType
-	if !lctx.runDigits() {
-		return false
+	if !l.runDigits() {
+		return ILLEGAL, false
 	}
 	typ = INT
 
-	if lctx.peek() == '.' {
-		lctx.advance()
-		if !lctx.runDigits() {
-			return false
+	if l.peek() == '.' {
+		l.advance()
+		if !l.runDigits() {
+			return ILLEGAL, false
 		}
 		typ = FLOAT
 	}
 
-	switch lctx.peek() {
+	switch l.peek() {
 	case 'e', 'E':
 		typ = FLOAT
-		lctx.advance()
-		switch lctx.next() {
+		l.advance()
+		switch l.next() {
 		case '-', '+':
 		default:
-			return false
+			return ILLEGAL, false
 		}
-		if !lctx.runDigits() {
-			return false
+		if !l.runDigits() {
+			return ILLEGAL, false
 		}
 	}
 
-	lctx.emit(typ)
-	return true
+	return typ, true
 }
 
-func (lctx *lexCtx) skipInsignificant() {
+func (l *Lexer) skipInsignificant() {
 	for {
-		switch lctx.peek() {
+		switch l.peek() {
 		case '\t', ' ', '\n', '\r', ',':
-			lctx.advance()
+			l.advance()
 		default:
-			lctx.emit(IGNORABLE)
+			l.emit(nil, IGNORABLE)
 			return
 		}
 	}
 }
 
 // ...
-func (lctx *lexCtx) runSpread() bool {
+func (l *Lexer) runSpread() bool {
 	for i := 0; i < 3; i++ {
-		if lctx.next() != '.' {
+		if l.next() != '.' {
 			return false
 		}
 	}
@@ -287,8 +276,8 @@ func (lctx *lexCtx) runSpread() bool {
 }
 
 // [_A-Za-z][_0-9A-Za-z]*
-func (lctx *lexCtx) runName() bool {
-	r := lctx.next()
+func (l *Lexer) runName() bool {
+	r := l.next()
 	switch {
 	case r == 0x5f: // _
 	case 0x41 <= r && r <= 0x5a: // A-Z
@@ -298,7 +287,7 @@ func (lctx *lexCtx) runName() bool {
 	}
 
 	for {
-		r := lctx.peek()
+		r := l.peek()
 		switch {
 		case r == 0x5f: // _
 		case 0x30 <= r && r <= 0x39: // 0-9
@@ -307,49 +296,49 @@ func (lctx *lexCtx) runName() bool {
 		default:
 			return true
 		}
-		lctx.advance()
+		l.advance()
 	}
 	return false
 }
 
-func (lctx *lexCtx) runString() bool {
-	if lctx.next() != '"' {
+func (l *Lexer) runString() bool {
+	if l.next() != '"' {
 		return false
 	}
 
 	for loop := true; loop; {
-		switch lctx.peek() {
+		switch l.peek() {
 		case '"':
 			// bail out of the for
 			loop = false
 			continue
 		case '\\':
-			if !lctx.runEscapeSequence() {
+			if !l.runEscapeSequence() {
 				return false
 			}
 		case '\n', '\r':
 			return false
 		default:
-			lctx.advance()
+			l.advance()
 		}
 	}
 
-	if lctx.next() != '"' {
+	if l.next() != '"' {
 		return false
 	}
 	return true
 }
 
-func (lctx *lexCtx) runEscapeSequence() bool {
-	if lctx.next() != '\\' {
+func (l *Lexer) runEscapeSequence() bool {
+	if l.next() != '\\' {
 		return false
 	}
 
-	switch lctx.peek() {
+	switch l.peek() {
 	case 'u':
-		lctx.advance()
+		l.advance()
 		for i := 0; i < 4; i++ {
-			r := lctx.next()
+			r := l.next()
 			switch {
 			case 0x30 <= r && r <= 0x39: // 0-9
 			case 0x41 <= r && r <= 0x46: // A-F
@@ -360,7 +349,7 @@ func (lctx *lexCtx) runEscapeSequence() bool {
 		}
 		return true
 	case '"', '\\', '/', 'b', 'f', 'n', 'r', 't':
-		lctx.advance()
+		l.advance()
 		return true
 	}
 	return false

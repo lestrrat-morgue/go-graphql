@@ -3,6 +3,9 @@
 package graphql_test
 
 import (
+	"log"
+	"net/http"
+	_ "net/http/pprof"
 	"testing"
 
 	official "github.com/graphql-go/graphql/language/parser"
@@ -10,6 +13,12 @@ import (
 	lestrrat "github.com/lestrrat/go-graphql/parser"
 	"golang.org/x/net/context"
 )
+
+func init() {
+	go func() {
+		log.Println(http.ListenAndServe("localhost:8080", nil))
+	}()
+}
 
 const src = `query {
   me {

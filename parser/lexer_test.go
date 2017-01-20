@@ -1,33 +1,30 @@
 package parser
 
 import (
-	"context"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func testlex(src []byte, tokens ...TokenType) (string, func(t *testing.T)) {
 	return string(src), func(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-
-	ch := make(chan *Token)
-	go lex(ctx, src, ch)
-
-	for i, expected := range tokens {
-		select {
-		case <-ctx.Done():
-			t.Errorf("timeout reached")
-			return
-		case tok := <-ch:
+		l := NewLexer(src)
+		seen := 0
+		var tok Token
+		for i, expected := range tokens {
+			if !l.Next(&tok) {
+				break
+			}
+			seen++
 			t.Logf("%s", tok)
 			if !assert.Equal(t, expected, tok.Type, "token #%d type should match (expected %s, got %s)", i+1, expected, tok.Type) {
 				return
 			}
 		}
-	}
+
+		if !assert.Equal(t, len(tokens), seen, "should see expected number of tokens") {
+			return
+		}
 	}
 }
 
