@@ -13,6 +13,7 @@ const (
 	falseKey      = "false"
 	fragmentKey   = "fragment"
 	implementsKey = "implements"
+	inputKey      = "input"
 	interfaceKey  = "interface"
 	mutationKey   = "mutation"
 	nullKey       = "null"
@@ -215,7 +216,7 @@ func (pctx *parseCtx) parseDocument() (*model.Document, error) {
 				}
 				doc.AddDefinitions(frag)
 			case typeKey:
-				typ, err := pctx.parseObjectTypeDefinition()
+				typ, err := pctx.parseObjectDefinition()
 				if err != nil {
 					return nil, errors.Wrap(err, `failed to parse object type definition`)
 				}
@@ -238,6 +239,12 @@ func (pctx *parseCtx) parseDocument() (*model.Document, error) {
 					return nil, errors.Wrap(err, `failed to parse union definition`)
 				}
 				doc.AddDefinitions(union)
+			case inputKey:
+				input, err := pctx.parseInputDefinition()
+				if err != nil {
+					return nil, errors.Wrap(err, `failed to parse input definition`)
+				}
+				doc.AddDefinitions(input)
 			default:
 				return nil, unexpectedName(t, `document`, queryKey, mutationKey, fragmentKey, typeKey, enumKey, interfaceKey, unionKey)
 			}
@@ -834,7 +841,7 @@ func (pctx *parseCtx) parseObjectField() (*model.ObjectField, error) {
 	return model.NewObjectField(name, v), nil
 }
 
-func (pctx *parseCtx) parseObjectTypeDefinition() (*model.ObjectTypeDefinition, error) {
+func (pctx *parseCtx) parseObjectDefinition() (*model.ObjectDefinition, error) {
 	if _, err := consumeName(pctx, typeKey); err != nil {
 		return nil, errors.Wrap(err, `object type`)
 	}
@@ -860,14 +867,14 @@ func (pctx *parseCtx) parseObjectTypeDefinition() (*model.ObjectTypeDefinition, 
 		return nil, errors.Wrap(err, `object type`)
 	}
 
-	var fields []*model.ObjectTypeDefinitionField
+	var fields []*model.ObjectFieldDefinition
 	for loop := true; loop; {
 		if peekToken(pctx, BRACE_R) {
 			loop = false
 			continue
 		}
 
-		field, err := pctx.parseObjectTypeDefinitionField()
+		field, err := pctx.parseObjectFieldDefinition()
 		if err != nil {
 			return nil, errors.Wrap(err, `failed to parse object type field`)
 		}
@@ -878,7 +885,7 @@ func (pctx *parseCtx) parseObjectTypeDefinition() (*model.ObjectTypeDefinition, 
 		return nil, errors.Wrap(err, `object type`)
 	}
 
-	def := model.NewObjectTypeDefinition(name)
+	def := model.NewObjectDefinition(name)
 	def.AddFields(fields...)
 	if len(implName) > 0 {
 		def.SetImplements(implName)
@@ -886,16 +893,16 @@ func (pctx *parseCtx) parseObjectTypeDefinition() (*model.ObjectTypeDefinition, 
 	return def, nil
 }
 
-func (pctx *parseCtx) parseObjectTypeDefinitionField() (*model.ObjectTypeDefinitionField, error) {
+func (pctx *parseCtx) parseObjectFieldDefinition() (*model.ObjectFieldDefinition, error) {
 	name, err := consumeName(pctx)
 	if err != nil {
 		return nil, errors.Wrap(err, `object field`)
 	}
 
-	var arguments model.ObjectTypeDefinitionFieldArgumentList
+	var arguments model.ObjectFieldArgumentDefinitionList
 	if peekToken(pctx, PAREN_L) {
 		var err error
-		arguments, err = pctx.parseObjectTypeDefinitionFieldArguments()
+		arguments, err = pctx.parseObjectFieldArgumentDefinitions()
 		if err != nil {
 			return nil, errors.Wrap(err, `failed to parse arguments`)
 		}
@@ -909,17 +916,17 @@ func (pctx *parseCtx) parseObjectTypeDefinitionField() (*model.ObjectTypeDefinit
 	if err != nil {
 		return nil, errors.Wrap(err, `object field: failed to parse type`)
 	}
-	f := model.NewObjectTypeDefinitionField(name, typ)
+	f := model.NewObjectFieldDefinition(name, typ)
 	f.AddArguments(arguments...)
 	return f, nil
 }
 
-func (pctx *parseCtx) parseObjectTypeDefinitionFieldArguments() (model.ObjectTypeDefinitionFieldArgumentList, error) {
+func (pctx *parseCtx) parseObjectFieldArgumentDefinitions() (model.ObjectFieldArgumentDefinitionList, error) {
 	if _, err := consumeToken(pctx, PAREN_L); err != nil {
 		return nil, errors.Wrap(err, `object field arguments`)
 	}
 
-	var args model.ObjectTypeDefinitionFieldArgumentList
+	var args model.ObjectFieldArgumentDefinitionList
 
 	for loop := true; loop; {
 		if peekToken(pctx, PAREN_R) {
@@ -941,7 +948,7 @@ func (pctx *parseCtx) parseObjectTypeDefinitionFieldArguments() (model.ObjectTyp
 			return nil, errors.Wrap(err, `failed to parse object field type`)
 		}
 
-		arg := model.NewObjectTypeDefinitionFieldArgument(name, typ)
+		arg := model.NewObjectFieldArgumentDefinition(name, typ)
 
 		if peekToken(pctx, EQUALS) {
 			// we have default
@@ -1070,12 +1077,12 @@ func (pctx *parseCtx) parseUnionDefinition() (*model.UnionDefinition, error) {
 
 	union := model.NewUnionDefinition(name)
 
-	typ, err := consumeName(pctx)
+	typ, err := pctx.parseType()
 	if err != nil {
 		return nil, errors.Wrap(err, `union`)
 	}
 
-	var types []string
+	var types []model.Type
 	types = append(types, typ)
 
 	for loop := true; loop; {
@@ -1085,7 +1092,7 @@ func (pctx *parseCtx) parseUnionDefinition() (*model.UnionDefinition, error) {
 		}
 		pctx.advance()
 
-		typ, err := consumeName(pctx)
+		typ, err := pctx.parseType()
 		if err != nil {
 			return nil, errors.Wrap(err, `union`)
 		}
@@ -1095,3 +1102,61 @@ func (pctx *parseCtx) parseUnionDefinition() (*model.UnionDefinition, error) {
 
 	return union, nil
 }
+
+func (pctx *parseCtx) parseInputDefinition() (*model.InputDefinition, error) {
+	if _, err := consumeName(pctx, inputKey); err != nil {
+		return nil, errors.Wrap(err, `input`)
+	}
+
+	name, err := consumeName(pctx)
+	if err != nil {
+		return nil, errors.Wrap(err, `input`)
+	}
+
+	if _, err := consumeToken(pctx, BRACE_L); err != nil {
+		return nil, errors.Wrap(err, `input`)
+	}
+
+	var fields []*model.InputFieldDefinition
+	for loop := true; loop; {
+		if peekToken(pctx, BRACE_R) {
+			loop = false
+			continue
+		}
+
+		field, err := pctx.parseInputDefinitionField()
+		if err != nil {
+			return nil, errors.Wrap(err, `input`)
+		}
+		fields = append(fields, field)
+	}
+
+	if _, err := consumeToken(pctx, BRACE_R); err != nil {
+		return nil, errors.Wrap(err, `input`)
+	}
+	iface := model.NewInputDefinition(name)
+	iface.AddFields(fields...)
+	return iface, nil
+}
+
+func (pctx *parseCtx) parseInputDefinitionField() (*model.InputFieldDefinition, error) {
+	name, err := consumeName(pctx)
+	if err != nil {
+		return nil, errors.Wrap(err, `input field`)
+	}
+
+	if _, err := consumeToken(pctx, COLON); err != nil {
+		return nil, errors.Wrap(err, `input field`)
+	}
+
+	typ, err := pctx.parseType()
+	if err != nil {
+		return nil, errors.Wrap(err, `input field`)
+	}
+
+	def := model.NewInputFieldDefinition(name)
+	def.SetType(typ)
+	return def, nil
+}
+
+

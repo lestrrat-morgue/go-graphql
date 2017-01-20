@@ -30,8 +30,8 @@ func (f InlineFragment) Directives() chan *Directive {
 
 func NewFragmentDefinition(name string, typ *NamedType) *FragmentDefinition {
 	return &FragmentDefinition{
-		name: name,
-		typ:  typ,
+		nameComponent: nameComponent(name),
+		typ:           typ,
 	}
 }
 
@@ -41,11 +41,6 @@ func (f FragmentDefinition) SelectionSet() chan Selection {
 
 func (f *FragmentDefinition) AddSelections(selections ...Selection) {
 	f.selections.Add(selections...)
-}
-
-
-func (def FragmentDefinition) Name() string {
-	return def.name
 }
 
 func (def FragmentDefinition) Type() *NamedType {
@@ -106,28 +101,7 @@ func (def *OperationDefinition) AddSelections(list ...Selection) {
 
 func NewVariableDefinition(name string, typ Type) *VariableDefinition {
 	return &VariableDefinition{
-		name: name,
-		typ:  typ,
+		nameComponent: nameComponent(name),
+		typeComponent: typeComponent{ typ: typ },
 	}
-}
-
-func (def *VariableDefinition) SetDefaultValue(v Value) {
-	def.hasDefaultValue = true
-	def.defaultValue = v
-}
-
-func (def VariableDefinition) Name() string {
-	return def.name
-}
-
-func (def VariableDefinition) Type() Type {
-	return def.typ
-}
-
-func (def VariableDefinition) HasDefaultValue() bool {
-	return def.hasDefaultValue
-}
-
-func (def VariableDefinition) DefaultValue() Value {
-	return def.defaultValue
 }

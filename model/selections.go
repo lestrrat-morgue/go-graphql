@@ -15,12 +15,8 @@ func (s SelectionSet) Iterator() chan Selection {
 
 func NewField(n string) *Field {
 	return &Field{
-		name: n,
+		nameComponent: nameComponent(n),
 	}
-}
-
-func (f Field) Name() string {
-	return f.name
 }
 
 func (f Field) HasAlias() bool {
@@ -62,14 +58,10 @@ func (f *Field) AddSelections(selections ...Selection) {
 
 func NewFragmentSpread(name string) *FragmentSpread {
 	return &FragmentSpread{
-		name: name,
+		nameComponent: nameComponent(name),
 	}
 }
 
 func (f *FragmentSpread) AddDirectives(directives ...*Directive) {
 	f.directives.Add(directives...)
-}
-
-func (f FragmentSpread) Name() string {
-	return f.name
 }

@@ -62,8 +62,8 @@ func (ctx *fmtCtx) fmtDocument(dst io.Writer, v *model.Document) error {
 			if err := ctx.fmtFragmentDefinition(&buf, def.(*model.FragmentDefinition)); err != nil {
 				return errors.Wrap(err, `failed to format fragment definition`)
 			}
-		case *model.ObjectTypeDefinition:
-			if err := ctx.fmtObjectTypeDefinition(&buf, def.(*model.ObjectTypeDefinition)); err != nil {
+		case *model.ObjectDefinition:
+			if err := ctx.fmtObjectDefinition(&buf, def.(*model.ObjectDefinition)); err != nil {
 				return errors.Wrap(err, `failed to format object type definition`)
 			}
 		case *model.InterfaceDefinition:
@@ -77,6 +77,10 @@ func (ctx *fmtCtx) fmtDocument(dst io.Writer, v *model.Document) error {
 		case *model.UnionDefinition:
 			if err := ctx.fmtUnionDefinition(&buf, def.(*model.UnionDefinition)); err != nil {
 				return errors.Wrap(err, `failed to format union definition`)
+			}
+		case *model.InputDefinition:
+			if err := ctx.fmtInputDefinition(&buf, def.(*model.InputDefinition)); err != nil {
+				return errors.Wrap(err, `failed to format input definition`)
 			}
 		}
 	}
@@ -470,7 +474,7 @@ func (ctx *fmtCtx) fmtDirectives(dst io.Writer, dirch chan *model.Directive) err
 	return nil
 }
 
-func (ctx *fmtCtx) fmtObjectTypeDefinition(dst io.Writer, v *model.ObjectTypeDefinition) error {
+func (ctx *fmtCtx) fmtObjectDefinition(dst io.Writer, v *model.ObjectDefinition) error {
 	var buf bytes.Buffer
 	buf.WriteString("type ")
 	buf.WriteString(v.Name())
@@ -484,7 +488,7 @@ func (ctx *fmtCtx) fmtObjectTypeDefinition(dst io.Writer, v *model.ObjectTypeDef
 			buf.WriteByte('\n')
 			buf.Write(ctx.indent())
 			buf.WriteString(field.Name())
-			if err := ctx.fmtObjectTypeDefinitionFieldArgumentList(&buf, field.Arguments()); err != nil {
+			if err := ctx.fmtObjectFieldArgumentDefinitionList(&buf, field.Arguments()); err != nil {
 				return errors.Wrap(err, `failed to format object field argumets`)
 			}
 			buf.WriteString(": ")
@@ -505,7 +509,7 @@ func (ctx *fmtCtx) fmtObjectTypeDefinition(dst io.Writer, v *model.ObjectTypeDef
 	return nil
 }
 
-func (ctx *fmtCtx) fmtObjectTypeDefinitionFieldArgument(dst io.Writer, v *model.ObjectTypeDefinitionFieldArgument) error {
+func (ctx *fmtCtx) fmtObjectFieldArgumentDefinition(dst io.Writer, v *model.ObjectFieldArgumentDefinition) error {
 	var buf bytes.Buffer
 	buf.WriteString(v.Name())
 	buf.WriteString(": ")
@@ -526,7 +530,7 @@ func (ctx *fmtCtx) fmtObjectTypeDefinitionFieldArgument(dst io.Writer, v *model.
 	return nil
 }
 
-func (ctx *fmtCtx) fmtObjectTypeDefinitionFieldArgumentList(dst io.Writer, argch chan *model.ObjectTypeDefinitionFieldArgument) error {
+func (ctx *fmtCtx) fmtObjectFieldArgumentDefinitionList(dst io.Writer, argch chan *model.ObjectFieldArgumentDefinition) error {
 	l := len(argch)
 	if l == 0 {
 		return nil
@@ -537,7 +541,7 @@ func (ctx *fmtCtx) fmtObjectTypeDefinitionFieldArgumentList(dst io.Writer, argch
 
 	argc := 0
 	for arg := range argch {
-		if err := ctx.fmtObjectTypeDefinitionFieldArgument(&buf, arg); err != nil {
+		if err := ctx.fmtObjectFieldArgumentDefinition(&buf, arg); err != nil {
 			return errors.Wrap(err, `failed to format argument`)
 		}
 		if l-1 > argc {
@@ -561,7 +565,7 @@ func (ctx *fmtCtx) fmtEnumDefinition(dst io.Writer, v *model.EnumDefinition) err
 	err := ctx.enterleave(func() error {
 		return errors.Wrap(ctx.fmtEnumElementList(&buf, v.Elements()), `failed to format enum element`)
 	})
-	if err != nil  {
+	if err != nil {
 		return err
 	}
 	buf.WriteString("\n}")
@@ -636,10 +640,16 @@ func (ctx *fmtCtx) fmtUnionDefinition(dst io.Writer, v *model.UnionDefinition) e
 
 	ch := v.Types()
 	if len(ch) > 0 {
-		buf.WriteString(<-ch)
+		t := <-ch
+		if err := ctx.fmtType(&buf, t); err != nil {
+			return errors.Wrap(err, `failed to format type`)
+		}
 		for len(ch) > 0 {
+			t = <-ch
 			buf.WriteString(" | ")
-			buf.WriteString(<-ch)
+			if err := ctx.fmtType(&buf, t); err != nil {
+				return errors.Wrap(err, `failed to format type`)
+			}
 		}
 	}
 
@@ -648,3 +658,46 @@ func (ctx *fmtCtx) fmtUnionDefinition(dst io.Writer, v *model.UnionDefinition) e
 	}
 	return nil
 }
+
+func (ctx *fmtCtx) fmtInputDefinition(dst io.Writer, v *model.InputDefinition) error {
+	var buf bytes.Buffer
+
+	buf.WriteString("input ")
+	buf.WriteString(v.Name())
+	buf.WriteString(" {")
+	err := ctx.enterleave(func() error {
+		for f := range v.Fields() {
+			buf.WriteByte('\n')
+			buf.Write(ctx.indent())
+			if err := ctx.fmtInputDefinitionField(&buf, f); err != nil {
+				return errors.Wrap(err, `failed to format input field`)
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+	buf.WriteString("\n}")
+	if _, err := buf.WriteTo(dst); err != nil {
+		return errors.Wrap(err, `failed to write to destination`)
+	}
+	return nil
+}
+
+func (ctx *fmtCtx) fmtInputDefinitionField(dst io.Writer, v *model.InputFieldDefinition) error {
+	var buf bytes.Buffer
+
+	buf.WriteString(v.Name())
+	buf.WriteString(": ")
+	if err := ctx.fmtType(&buf, v.Type()); err != nil {
+		return errors.Wrap(err, `failed to format field type`)
+	}
+
+	if _, err := buf.WriteTo(dst); err != nil {
+		return errors.Wrap(err, `failed to write to destination`)
+	}
+	return nil
+}
+
+

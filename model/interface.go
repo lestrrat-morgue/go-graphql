@@ -1,5 +1,6 @@
 package model
 
+type TypeList []Type
 type Document struct {
 	definitions []Definition
 	types       TypeList
@@ -23,7 +24,7 @@ type OperationDefinition struct {
 }
 
 type FragmentDefinition struct {
-	name       string
+	nameComponent
 	typ        *NamedType
 	directives DirectiveList
 	selections SelectionSet
@@ -34,22 +35,20 @@ type Type interface {
 	SetNullable(bool)
 }
 
-type nullable bool
 type NamedType struct {
 	nullable
-	name string
+	nameComponent
 }
 
 type ListType struct {
 	nullable
-	typ Type
+	typeComponent
 }
 
 type VariableDefinition struct {
-	name            string
-	typ             Type
-	hasDefaultValue bool
-	defaultValue    Value
+	nameComponent
+	typeComponent
+	defaultValueComponent
 }
 type VariableDefinitionList []*VariableDefinition
 
@@ -58,7 +57,7 @@ type Value interface {
 }
 
 type Variable struct {
-	name string
+	nameComponent
 }
 
 type IntValue struct {
@@ -80,12 +79,12 @@ type BoolValue struct {
 type NullValue struct{}
 
 type EnumValue struct {
-	name string
+	nameComponent
 }
 
 // ObjectField represents a literal object's field (NOT a type)
 type ObjectField struct {
-	name  string
+	nameComponent
 	value Value
 }
 type ObjectFieldList []*ObjectField
@@ -99,7 +98,7 @@ type Selection interface{}
 type SelectionSet []Selection
 
 type Argument struct {
-	name  string
+	nameComponent
 	value Value
 }
 type ArgumentList []*Argument
@@ -111,16 +110,16 @@ type Directive struct {
 type DirectiveList []*Directive
 
 type Field struct {
+	nameComponent
 	hasAlias   bool
 	alias      string
 	arguments  ArgumentList
 	directives DirectiveList
-	name       string
 	selections SelectionSet
 }
 
 type FragmentSpread struct {
-	name       string
+	nameComponent
 	directives DirectiveList
 }
 
@@ -130,57 +129,66 @@ type InlineFragment struct {
 	typ        *NamedType
 }
 
-type TypeList []Type
 
-type ObjectTypeDefinition struct {
-	name          string
-	fields        ObjectTypeDefinitionFieldList
+// ObjectDefinition is a definition of a new object type
+type ObjectDefinition struct {
+	nameComponent
+	fields        ObjectFieldDefinitionList
 	hasImplements bool
 	implements    string
 }
 
-// List of ObjectTypeDefinition
-type ObjectTypeDefinitionList []*ObjectTypeDefinition
-
-type ObjectTypeDefinitionFieldArgument struct {
-	name            string
-	typ             Type
-	hasDefaultValue bool
-	defaultValue    Value
+type ObjectFieldArgumentDefinition struct {
+	nameComponent
+	typeComponent
+	defaultValueComponent
 }
-type ObjectTypeDefinitionFieldArgumentList []*ObjectTypeDefinitionFieldArgument
 
-type ObjectTypeDefinitionField struct {
-	name      string
-	typ       Type
-	arguments ObjectTypeDefinitionFieldArgumentList
+type ObjectFieldArgumentDefinitionList []*ObjectFieldArgumentDefinition
+
+type ObjectFieldDefinition struct {
+	nameComponent
+	typeComponent
+	arguments ObjectFieldArgumentDefinitionList
 }
-type ObjectTypeDefinitionFieldList []*ObjectTypeDefinitionField
+
+type ObjectFieldDefinitionList []*ObjectFieldDefinition
 
 type EnumDefinition struct {
-	name     string
+	nameComponent
 	elements EnumElementList
 }
 
 type EnumElement struct {
-	name string
+	nameComponent
 }
 type EnumElementList []*EnumElement
 
 type InterfaceDefinition struct {
-	name   string
+	nameComponent
 	fields InterfaceFieldList
 }
 
 type InterfaceField struct {
-	name string
-	typ  Type
+	nameComponent
+	typeComponent
 }
 
 type InterfaceFieldList []*InterfaceField
 
-type StringList []string
 type UnionDefinition struct {
-	name string
-	types StringList
+	nameComponent
+	types TypeList
 }
+
+type InputDefinition struct {
+	nameComponent
+	fields InputFieldDefinitionList
+}
+
+type InputFieldDefinition struct {
+	nameComponent
+	typeComponent
+}
+
+type InputFieldDefinitionList []*InputFieldDefinition

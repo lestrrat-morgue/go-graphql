@@ -8,12 +8,12 @@ import (
 
 func NewVariable(s string) *Variable {
 	return &Variable{
-		name: s,
+		nameComponent: nameComponent(s),
 	}
 }
 
 func (v Variable) Value() interface{} {
-	return v.name
+	return v.Name()
 }
 
 func NewIntValue(s string) (*IntValue, error) {
@@ -74,12 +74,12 @@ func (v NullValue) Value() interface{} {
 
 func NewEnumValue(s string) *EnumValue {
 	return &EnumValue{
-		name: s,
+		nameComponent: nameComponent(s),
 	}
 }
 
 func (v EnumValue) Value() interface{} {
-	return v.name
+	return v.Name()
 }
 
 func (l *ObjectFieldList) Add(v ...*ObjectField) {
@@ -97,13 +97,9 @@ func (l ObjectFieldList) Iterator() chan *ObjectField {
 
 func NewObjectField(name string, value Value) *ObjectField {
 	return &ObjectField{
-		name:  name,
+		nameComponent: nameComponent(name),
 		value: value,
 	}
-}
-
-func (f ObjectField) Name() string {
-	return f.name
 }
 
 func (f ObjectField) Value() Value {

@@ -202,5 +202,32 @@ type Droid implements Character {
   }
 }`))
 	t.Run(parseSuccess(`union SearchResult = Human | Droid | Starship`))
+	t.Run(parseSuccess(`{
+  search(text: "an") {
+    ... on Human {
+      name
+      height
+    }
+    ... on Droid {
+      name
+      primaryFunction
+    }
+    ... on Starship {
+      name
+      length
+    }
+  }
+}`))
+	t.Run(parseSuccess(`input ReviewInput {
+  stars: Int!
+  commentary: String
+}
+
+mutation CreateReviewForEpisode($ep: Episode!, $review: ReviewInput!) {
+  createReview(episode: $ep, review: $review) {
+    stars
+    commentary
+  }
+}`))
 }
  
