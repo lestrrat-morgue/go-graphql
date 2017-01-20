@@ -74,6 +74,10 @@ func (ctx *fmtCtx) fmtDocument(dst io.Writer, v *model.Document) error {
 			if err := ctx.fmtEnumDefinition(&buf, def.(*model.EnumDefinition)); err != nil {
 				return errors.Wrap(err, `failed to format enum definition`)
 			}
+		case *model.UnionDefinition:
+			if err := ctx.fmtUnionDefinition(&buf, def.(*model.UnionDefinition)); err != nil {
+				return errors.Wrap(err, `failed to format union definition`)
+			}
 		}
 	}
 
@@ -623,4 +627,24 @@ func (ctx *fmtCtx) fmtInterfaceDefinitionField(dst io.Writer, v *model.Interface
 	return nil
 }
 
+func (ctx *fmtCtx) fmtUnionDefinition(dst io.Writer, v *model.UnionDefinition) error {
+	var buf bytes.Buffer
 
+	buf.WriteString("union ")
+	buf.WriteString(v.Name())
+	buf.WriteString(" = ")
+
+	ch := v.Types()
+	if len(ch) > 0 {
+		buf.WriteString(<-ch)
+		for len(ch) > 0 {
+			buf.WriteString(" | ")
+			buf.WriteString(<-ch)
+		}
+	}
+
+	if _, err := buf.WriteTo(dst); err != nil {
+		return errors.Wrap(err, `failed to write to destination`)
+	}
+	return nil
+}

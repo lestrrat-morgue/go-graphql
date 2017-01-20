@@ -9,14 +9,18 @@ import (
 )
 
 const (
-	queryKey      = "query"
-	mutationKey   = "mutation"
-	fragmentKey   = "fragment"
-	onKey         = "on"
-	typeKey       = "type"
 	enumKey       = "enum"
-	interfaceKey  = "interface"
+	falseKey      = "false"
+	fragmentKey   = "fragment"
 	implementsKey = "implements"
+	interfaceKey  = "interface"
+	mutationKey   = "mutation"
+	nullKey       = "null"
+	onKey         = "on"
+	queryKey      = "query"
+	trueKey       = "true"
+	typeKey       = "type"
+	unionKey      = "union"
 )
 
 type Parser struct{}
@@ -78,6 +82,15 @@ func consumeName(pctx *parseCtx, names ...string) (string, error) {
 		}
 	}
 	return "", syntaxErr(t, `expected name %v, got %s`, names, t.Value)
+}
+
+func peekToken(pctx *parseCtx, typ TokenType) bool {
+	switch t := pctx.peek(); t.Type {
+	case typ:
+		return true
+	default:
+		return false
+	}
 }
 
 func peekName(pctx *parseCtx, name string) bool {
@@ -219,8 +232,14 @@ func (pctx *parseCtx) parseDocument() (*model.Document, error) {
 					return nil, errors.Wrap(err, `failed to parse interface definition`)
 				}
 				doc.AddDefinitions(iface)
+			case unionKey:
+				union, err := pctx.parseUnionDefinition()
+				if err != nil {
+					return nil, errors.Wrap(err, `failed to parse union definition`)
+				}
+				doc.AddDefinitions(union)
 			default:
-				return nil, unexpectedName(t, `document`, queryKey, mutationKey, fragmentKey, typeKey, enumKey, interfaceKey)
+				return nil, unexpectedName(t, `document`, queryKey, mutationKey, fragmentKey, typeKey, enumKey, interfaceKey, unionKey)
 			}
 		default:
 			return nil, unexpectedToken(t, `document`)
@@ -230,13 +249,8 @@ func (pctx *parseCtx) parseDocument() (*model.Document, error) {
 }
 
 func (pctx *parseCtx) parseTypeCondition() (*model.NamedType, error) {
-	switch t := pctx.next(); t.Type {
-	case NAME:
-		if t.Value != onKey {
-			return nil, syntaxErr(t, `expected "on", but got %s`, t.Value)
-		}
-	default:
-		return nil, unexpectedToken(t, `type condition`)
+	if _, err := consumeName(pctx, onKey); err != nil {
+		return nil, errors.Wrap(err, `type condition`)
 	}
 
 	typ, err := pctx.parseNamedType()
@@ -247,15 +261,10 @@ func (pctx *parseCtx) parseTypeCondition() (*model.NamedType, error) {
 }
 
 func (pctx *parseCtx) parseFragmentName() (string, error) {
-	var name string
-	switch t := pctx.next(); t.Type {
-	case NAME:
-		if t.Value == onKey {
-			return "", syntaxErr(t, `illegal fragment name "on"`)
-		}
-		name = t.Value
+	if peekName(pctx, onKey) {
+		return "", errors.New(`fragment name: illegal fragment name "on"`)
 	}
-	return name, nil
+	return consumeName(pctx)
 }
 
 // FragmentDefinition:
@@ -263,15 +272,14 @@ func (pctx *parseCtx) parseFragmentName() (string, error) {
 // FragmentName:
 //   Name but not on
 func (pctx *parseCtx) parseFragmentDefinition() (*model.FragmentDefinition, error) {
-	switch t := pctx.next(); t.Type {
-	case NAME:
-		switch t.Value {
-		case fragmentKey:
-		default:
-			return nil, syntaxErr(t, `expected "fragment", but got %s`, t.Value)
-		}
+	t, err := consumeToken(pctx, NAME)
+	if err != nil {
+		return nil, errors.Wrap(err, `fragment definition`)
+	}
+	switch t.Value {
+	case fragmentKey:
 	default:
-		return nil, unexpectedToken(t, `fragment`, NAME)
+		return nil, syntaxErr(t, `expected "fragment", but got %s`, t.Value)
 	}
 
 	name, err := pctx.parseFragmentName()
@@ -285,9 +293,7 @@ func (pctx *parseCtx) parseFragmentDefinition() (*model.FragmentDefinition, erro
 	}
 
 	fdef := model.NewFragmentDefinition(name, typ)
-
-	switch t := pctx.peek(); t.Type {
-	case AT:
+	if peekToken(pctx, AT) {
 		directives, err := pctx.parseDirectives()
 		if err != nil {
 			return nil, errors.Wrap(err, `failed to parse directives`)
@@ -314,29 +320,27 @@ func (pctx *parseCtx) parseOperationDefinition(implicitType bool) (*model.Operat
 	if implicitType {
 		optyp = model.OperationTypeQuery
 	} else {
-		switch t := pctx.next(); t.Type {
-		case NAME:
-			switch t.Value {
-			case queryKey:
-				optyp = model.OperationTypeQuery
-			case mutationKey:
-				optyp = model.OperationTypeMutation
-			default:
-				return nil, errors.Errorf(`unknown operation type '%s'`, t.Value)
-			}
+		name, err := consumeName(pctx)
+		if err != nil {
+			return nil, errors.Wrap(err, `operation definition`)
+		}
+		switch name {
+		case queryKey:
+			optyp = model.OperationTypeQuery
+		case mutationKey:
+			optyp = model.OperationTypeMutation
+		default:
+			return nil, errors.Errorf(`unknown operation type '%s'`, name)
 		}
 	}
 
 	def := model.NewOperationDefinition(optyp)
-
-	switch t := pctx.peek(); t.Type {
-	case NAME:
+	if t := pctx.peek(); t.Type == NAME {
 		pctx.advance()
 		def.SetName(t.Value)
 	}
 
-	switch t := pctx.peek(); t.Type {
-	case PAREN_L:
+	if peekToken(pctx, PAREN_L) {
 		vdef, err := pctx.parseVariableDefinitions()
 		if err != nil {
 			return nil, errors.Wrap(err, `failed to parse query variable definitions`)
@@ -344,8 +348,7 @@ func (pctx *parseCtx) parseOperationDefinition(implicitType bool) (*model.Operat
 		def.AddVariableDefinitions(vdef...)
 	}
 
-	switch t := pctx.peek(); t.Type {
-	case AT:
+	if peekToken(pctx, AT) {
 		directives, err := pctx.parseDirectives()
 		if err != nil {
 			return nil, errors.Wrap(err, `failed to parse query directives`)
@@ -364,16 +367,13 @@ func (pctx *parseCtx) parseOperationDefinition(implicitType bool) (*model.Operat
 // VariableDefinitions:
 //  ( VariableDefinition... )
 func (pctx *parseCtx) parseVariableDefinitions() (model.VariableDefinitionList, error) {
-	switch t := pctx.next(); t.Type {
-	case PAREN_L:
-	default:
-		return nil, errors.Errorf(`expected PAREN_L, got %s`, t.Type)
+	if _, err := consumeToken(pctx, PAREN_L); err != nil {
+		return nil, errors.Wrap(err, `variable`)
 	}
 
 	var list model.VariableDefinitionList
 	for loop := true; loop; {
-		switch t := pctx.peek(); t.Type {
-		case PAREN_R:
+		if peekToken(pctx, PAREN_R) {
 			loop = false
 			continue
 		}
@@ -385,8 +385,8 @@ func (pctx *parseCtx) parseVariableDefinitions() (model.VariableDefinitionList, 
 		list = append(list, vdef)
 	}
 
-	if pctx.next().Type != PAREN_R {
-		return nil, errors.New(`expected PAREN_R`)
+	if _, err := consumeToken(pctx, PAREN_R); err != nil {
+		return nil, errors.Wrap(err, `variable`)
 	}
 	return list, nil
 }
@@ -398,24 +398,17 @@ func (pctx *parseCtx) parseVariableDefinitions() (model.VariableDefinitionList, 
 // DefaultValue:
 //    = Value
 func (pctx *parseCtx) parseVariableDefinition() (*model.VariableDefinition, error) {
-	switch t := pctx.next(); t.Type {
-	case DOLLAR:
-	default:
-		return nil, unexpectedToken(t, `variable`, DOLLAR)
+	if _, err := consumeToken(pctx, DOLLAR); err != nil {
+		return nil, errors.Wrap(err, `variable`)
 	}
 
-	var name string
-	switch t := pctx.next(); t.Type {
-	case NAME:
-		name = t.Value
-	default:
-		return nil, errors.Errorf(`variable: expected NAME, got %s`, t.Type)
+	name, err := consumeName(pctx)
+	if err != nil {
+		return nil, errors.Wrap(err, `variable`)
 	}
 
-	switch t := pctx.next(); t.Type {
-	case COLON:
-	default:
-		return nil, errors.Errorf(`variable: expected COLO, got %s`, t.Type)
+	if _, err := consumeToken(pctx, COLON); err != nil {
+		return nil, errors.Wrap(err, `variable`)
 	}
 
 	typ, err := pctx.parseType()
@@ -424,7 +417,7 @@ func (pctx *parseCtx) parseVariableDefinition() (*model.VariableDefinition, erro
 	}
 
 	vdef := model.NewVariableDefinition(name, typ)
-	if pctx.peek().Type == EQUALS {
+	if peekToken(pctx, EQUALS) {
 		pctx.advance()
 		v, err := pctx.parseValue()
 		if err != nil {
@@ -468,8 +461,7 @@ func (pctx *parseCtx) parseType() (model.Type, error) {
 		return nil, errors.Errorf(`expected NamedType or ListType, got %s`, t.Type)
 	}
 
-	switch t := pctx.peek(); t.Type {
-	case BANG:
+	if peekToken(pctx, BANG) {
 		pctx.advance()
 		typ.SetNullable(false)
 	}
@@ -477,12 +469,12 @@ func (pctx *parseCtx) parseType() (model.Type, error) {
 }
 
 func (pctx *parseCtx) parseNamedType() (model.Type, error) {
-	t := pctx.next()
-	if t.Type != NAME {
-		return nil, errors.Errorf(`expected Name for NamedType, got %s`, t.Type)
+	typname, err := consumeName(pctx)
+	if err != nil {
+		return nil, errors.Wrap(err, `named type`)
 	}
 
-	typ := model.NewNamedType(t.Value)
+	typ := model.NewNamedType(typname)
 	if err := pctx.registerType(typ); err != nil {
 		return nil, errors.Wrap(err, `failed to register type`)
 	}
@@ -491,28 +483,25 @@ func (pctx *parseCtx) parseNamedType() (model.Type, error) {
 }
 
 func (pctx *parseCtx) parseListType() (model.Type, error) {
-	t := pctx.next()
-	if t.Type != BRACKET_L {
-		return nil, unexpectedToken(t, `list type`, BRACKET_L)
+	if _, err := consumeToken(pctx, BRACKET_L); err != nil {
+		return nil, errors.Wrap(err, `list type`)
 	}
 
-	t = pctx.next()
-	if t.Type != NAME {
-		return nil, unexpectedToken(t, `list type`, NAME)
-	}
-
-	typ, err := pctx.lookupType(t.Value)
+	typname, err := consumeName(pctx)
 	if err != nil {
-		typ = model.NewNamedType(t.Value)
+		return nil, errors.Wrap(err, `list type`)
+	}
+
+	typ, err := pctx.lookupType(typname)
+	if err != nil {
+		typ = model.NewNamedType(typname)
 		if err := pctx.registerType(typ); err != nil {
 			return nil, errors.Wrap(err, `failed to register type`)
 		}
 	}
 
-	switch t := pctx.next(); t.Type {
-	case BRACKET_R:
-	default:
-		return nil, unexpectedToken(t, `list type`, BRACKET_R)
+	if _, err := consumeToken(pctx, BRACKET_R); err != nil {
+		return nil, errors.Wrap(err, `list type`)
 	}
 
 	return model.NewListType(typ), nil
@@ -552,9 +541,9 @@ func (pctx *parseCtx) parseValue() (model.Value, error) {
 	case NAME:
 		pctx.advance()
 		switch t.Value {
-		case "true", "false":
+		case trueKey, falseKey:
 			return model.NewBoolValue(t.Value)
-		case "null":
+		case nullKey:
 			return model.NullValue{}, nil
 		default:
 			return model.NewEnumValue(t.Value), nil
@@ -567,25 +556,19 @@ func (pctx *parseCtx) parseValue() (model.Value, error) {
 func (pctx *parseCtx) parseDirectives() (model.DirectiveList, error) {
 	var directives model.DirectiveList
 	for loop := true; loop; {
-		switch t := pctx.peek(); t.Type {
-		case AT:
-			pctx.advance()
-		default:
+		if !peekToken(pctx, AT) {
 			loop = false
 			continue
 		}
+		pctx.advance()
 
-		var name string
-		switch t := pctx.next(); t.Type {
-		case NAME:
-			name = t.Value
-		default:
-			return nil, unexpectedToken(t, `directive`, NAME)
+		name, err := consumeName(pctx)
+		if err != nil {
+			return nil, errors.Wrap(err, `directive`)
 		}
 
 		d := model.NewDirective(name)
-		switch t := pctx.peek(); t.Type {
-		case PAREN_L:
+		if peekToken(pctx, PAREN_L) {
 			arguments, err := pctx.parseArguments()
 			if err != nil {
 				return nil, errors.Wrap(err, `failed to parse arguments`)
@@ -601,16 +584,13 @@ func (pctx *parseCtx) parseDirectives() (model.DirectiveList, error) {
 // SelectionSet:
 //   { Selection... }
 func (pctx *parseCtx) parseSelectionSet() (model.SelectionSet, error) {
-	switch t := pctx.next(); t.Type {
-	case BRACE_L:
-	default:
-		return nil, errors.Errorf(`selection set: expected {, got %s`, t.Type)
+	if _, err := consumeToken(pctx, BRACE_L); err != nil {
+		return nil, errors.Wrap(err, `selection set`)
 	}
 
 	var set model.SelectionSet
 	for loop := true; loop; {
-		switch t := pctx.peek(); t.Type {
-		case BRACE_R:
+		if peekToken(pctx, BRACE_R) {
 			loop = false
 			continue
 		}
@@ -622,10 +602,8 @@ func (pctx *parseCtx) parseSelectionSet() (model.SelectionSet, error) {
 		set = append(set, sel)
 	}
 
-	switch t := pctx.next(); t.Type {
-	case BRACE_R:
-	default:
-		return nil, errors.Errorf(`selection set: expected }, got %s`, t.Type)
+	if _, err := consumeToken(pctx, BRACE_R); err != nil {
+		return nil, errors.Wrap(err, `selection set`)
 	}
 	return set, nil
 }
@@ -635,34 +613,27 @@ func (pctx *parseCtx) parseSelectionSet() (model.SelectionSet, error) {
 //   FragmentSpread
 //   InlineFragment
 func (pctx *parseCtx) parseSelection() (model.Selection, error) {
-	switch t := pctx.peek(); t.Type {
-	case SPREAD:
+	if peekToken(pctx, SPREAD) {
 		pctx.advance()
 		return pctx.parseFragmentSpreadOrInlineFragment()
-	default:
-		return pctx.parseField()
 	}
+	return pctx.parseField()
 }
 
 func (pctx *parseCtx) parseField() (*model.Field, error) {
 	var name string
 	var alias string
-	switch t := pctx.next(); t.Type {
-	case NAME:
-		name = t.Value
-	default:
-		return nil, errors.Errorf(`field: expected NAME, got %s`, t.Type)
+	name, err := consumeName(pctx)
+	if err != nil {
+		return nil, errors.Wrap(err, `field`)
 	}
 
-	switch t := pctx.peek(); t.Type {
-	case COLON:
+	if peekToken(pctx, COLON) {
 		pctx.advance()
 		alias = name
-		switch t = pctx.next(); t.Type {
-		case NAME:
-			name = t.Value
-		default:
-			return nil, errors.Errorf(`field: expected NAME, got %s`, t.Type)
+		name, err = consumeName(pctx)
+		if err != nil {
+			return nil, errors.Wrap(err, `field`)
 		}
 	}
 
@@ -671,8 +642,7 @@ func (pctx *parseCtx) parseField() (*model.Field, error) {
 		field.SetAlias(alias)
 	}
 
-	switch t := pctx.peek(); t.Type {
-	case PAREN_L:
+	if peekToken(pctx, PAREN_L) {
 		args, err := pctx.parseArguments()
 		if err != nil {
 			return nil, errors.Wrap(err, `failed to parse arguments`)
@@ -680,8 +650,7 @@ func (pctx *parseCtx) parseField() (*model.Field, error) {
 		field.AddArguments(args...)
 	}
 
-	switch t := pctx.peek(); t.Type {
-	case AT:
+	if peekToken(pctx, AT) {
 		directives, err := pctx.parseDirectives()
 		if err != nil {
 			return nil, errors.Wrap(err, `failed to parse directives`)
@@ -689,8 +658,7 @@ func (pctx *parseCtx) parseField() (*model.Field, error) {
 		field.AddDirectives(directives...)
 	}
 
-	switch t := pctx.peek(); t.Type {
-	case BRACE_L:
+	if peekToken(pctx, BRACE_L) {
 		set, err := pctx.parseSelectionSet()
 		if err != nil {
 			return nil, errors.Wrap(err, `failed to parse selection set`)
@@ -714,7 +682,7 @@ func (pctx *parseCtx) parseFragmentSpreadOrInlineFragment() (model.Selection, er
 		return pctx.parseInlineFragment()
 	case NAME:
 		switch t.Value {
-		case "on":
+		case onKey:
 			return pctx.parseInlineFragment()
 		}
 		// it's something else, then
@@ -725,33 +693,25 @@ func (pctx *parseCtx) parseFragmentSpreadOrInlineFragment() (model.Selection, er
 }
 
 func (pctx *parseCtx) parseArguments() (model.ArgumentList, error) {
-	switch t := pctx.next(); t.Type {
-	case PAREN_L:
-	default:
-		return nil, unexpectedToken(t, `arguments`, PAREN_L)
+	if _, err := consumeToken(pctx, PAREN_L); err != nil {
+		return nil, errors.Wrap(err, `arguments`)
 	}
 
 	var args model.ArgumentList
 
 	for loop := true; loop; {
-		switch t := pctx.peek(); t.Type {
-		case PAREN_R:
+		if peekToken(pctx, PAREN_R) {
 			loop = false
 			continue
 		}
 
-		var name string
-		switch t := pctx.next(); t.Type {
-		case NAME:
-			name = t.Value
-		default:
-			return nil, unexpectedToken(t, `arguments`, NAME)
+		name, err := consumeName(pctx)
+		if err != nil {
+			return nil, errors.Wrap(err, `arguments`)
 		}
 
-		switch t := pctx.next(); t.Type {
-		case COLON:
-		default:
-			return nil, unexpectedToken(t, `arguments`, COLON)
+		if _, err := consumeToken(pctx, COLON); err != nil {
+			return nil, errors.Wrap(err, `arguments`)
 		}
 
 		value, err := pctx.parseValue()
@@ -763,10 +723,8 @@ func (pctx *parseCtx) parseArguments() (model.ArgumentList, error) {
 
 	}
 
-	switch t := pctx.next(); t.Type {
-	case PAREN_R:
-	default:
-		return nil, unexpectedToken(t, `arguments`, PAREN_R)
+	if _, err := consumeToken(pctx, PAREN_R); err != nil {
+		return nil, errors.Wrap(err, `arguments`)
 	}
 
 	return args, nil
@@ -783,8 +741,7 @@ func (pctx *parseCtx) parseFragmentSpread() (*model.FragmentSpread, error) {
 
 	frag := model.NewFragmentSpread(name)
 
-	switch t := pctx.peek(); t.Type {
-	case AT:
+	if peekToken(pctx, AT) {
 		directives, err := pctx.parseDirectives()
 		if err != nil {
 			return nil, errors.Wrap(err, `failed to parse directives`)
@@ -800,20 +757,16 @@ func (pctx *parseCtx) parseFragmentSpread() (*model.FragmentSpread, error) {
 func (pctx *parseCtx) parseInlineFragment() (*model.InlineFragment, error) {
 	// Assumes ... has already been consumed
 	var typ *model.NamedType
-	switch t := pctx.peek(); t.Type {
-	case NAME:
-		if t.Value == onKey {
-			var err error
-			typ, err = pctx.parseTypeCondition()
-			if err != nil {
-				return nil, errors.Wrap(err, `failed to parse type condition`)
-			}
+	if peekName(pctx, onKey) {
+		var err error
+		typ, err = pctx.parseTypeCondition()
+		if err != nil {
+			return nil, errors.Wrap(err, `failed to parse type condition`)
 		}
 	}
 
 	var directives model.DirectiveList
-	switch t := pctx.peek(); t.Type {
-	case AT:
+	if peekToken(pctx, AT) {
 		var err error
 		directives, err = pctx.parseDirectives()
 		if err != nil {
@@ -839,16 +792,13 @@ func (pctx *parseCtx) parseInlineFragment() (*model.InlineFragment, error) {
 // ObjectField:
 //   Name : Value
 func (pctx *parseCtx) parseObjectValue() (*model.ObjectValue, error) {
-	switch t := pctx.next(); t.Type {
-	case BRACE_L:
-	default:
-		return nil, unexpectedToken(t, `object value`, BRACE_L)
+	if _, err := consumeToken(pctx, BRACE_L); err != nil {
+		return nil, errors.Wrap(err, `object value`)
 	}
 
 	obj := model.NewObjectValue()
 	for loop := true; loop; {
-		switch t := pctx.peek(); t.Type {
-		case BRACE_R:
+		if peekToken(pctx, BRACE_R) {
 			loop = false
 			continue
 		}
@@ -861,27 +811,20 @@ func (pctx *parseCtx) parseObjectValue() (*model.ObjectValue, error) {
 		obj.AddFields(field)
 	}
 
-	switch t := pctx.next(); t.Type {
-	case BRACE_R:
-	default:
-		return nil, unexpectedToken(t, `object value`, BRACE_R)
+	if _, err := consumeToken(pctx, BRACE_R); err != nil {
+		return nil, errors.Wrap(err, `object value`)
 	}
 	return obj, nil
 }
 
 func (pctx *parseCtx) parseObjectField() (*model.ObjectField, error) {
-	var name string
-	switch t := pctx.next(); t.Type {
-	case NAME:
-		name = t.Value
-	default:
-		return nil, unexpectedToken(t, `object field`, NAME)
+	name, err := consumeName(pctx)
+	if err != nil {
+		return nil, errors.Wrap(err, `object field`)
 	}
 
-	switch t := pctx.next(); t.Type {
-	case COLON:
-	default:
-		return nil, unexpectedToken(t, `object field`, COLON)
+	if _, err := consumeToken(pctx, COLON); err != nil {
+		return nil, errors.Wrap(err, `object field`)
 	}
 
 	v, err := pctx.parseValue()
@@ -919,8 +862,7 @@ func (pctx *parseCtx) parseObjectTypeDefinition() (*model.ObjectTypeDefinition, 
 
 	var fields []*model.ObjectTypeDefinitionField
 	for loop := true; loop; {
-		switch t := pctx.peek(); t.Type {
-		case BRACE_R:
+		if peekToken(pctx, BRACE_R) {
 			loop = false
 			continue
 		}
@@ -932,10 +874,8 @@ func (pctx *parseCtx) parseObjectTypeDefinition() (*model.ObjectTypeDefinition, 
 		fields = append(fields, field)
 	}
 
-	switch t := pctx.next(); t.Type {
-	case BRACE_R:
-	default:
-		return nil, unexpectedToken(t, `object type`, BRACE_R)
+	if _, err := consumeToken(pctx, BRACE_R); err != nil {
+		return nil, errors.Wrap(err, `object type`)
 	}
 
 	def := model.NewObjectTypeDefinition(name)
@@ -947,17 +887,13 @@ func (pctx *parseCtx) parseObjectTypeDefinition() (*model.ObjectTypeDefinition, 
 }
 
 func (pctx *parseCtx) parseObjectTypeDefinitionField() (*model.ObjectTypeDefinitionField, error) {
-	var name string
-	switch t := pctx.next(); t.Type {
-	case NAME:
-		name = t.Value
-	default:
-		return nil, unexpectedToken(t, `object field`, NAME)
+	name, err := consumeName(pctx)
+	if err != nil {
+		return nil, errors.Wrap(err, `object field`)
 	}
 
 	var arguments model.ObjectTypeDefinitionFieldArgumentList
-	switch t := pctx.peek(); t.Type {
-	case PAREN_L:
+	if peekToken(pctx, PAREN_L) {
 		var err error
 		arguments, err = pctx.parseObjectTypeDefinitionFieldArguments()
 		if err != nil {
@@ -965,10 +901,8 @@ func (pctx *parseCtx) parseObjectTypeDefinitionField() (*model.ObjectTypeDefinit
 		}
 	}
 
-	switch t := pctx.next(); t.Type {
-	case COLON:
-	default:
-		return nil, unexpectedToken(t, `object field`, COLON)
+	if _, err := consumeToken(pctx, COLON); err != nil {
+		return nil, errors.Wrap(err, `object field`)
 	}
 
 	typ, err := pctx.parseType()
@@ -981,33 +915,25 @@ func (pctx *parseCtx) parseObjectTypeDefinitionField() (*model.ObjectTypeDefinit
 }
 
 func (pctx *parseCtx) parseObjectTypeDefinitionFieldArguments() (model.ObjectTypeDefinitionFieldArgumentList, error) {
-	switch t := pctx.next(); t.Type {
-	case PAREN_L:
-	default:
-		return nil, unexpectedToken(t, `object field arguments`, PAREN_L)
+	if _, err := consumeToken(pctx, PAREN_L); err != nil {
+		return nil, errors.Wrap(err, `object field arguments`)
 	}
 
 	var args model.ObjectTypeDefinitionFieldArgumentList
 
 	for loop := true; loop; {
-		switch t := pctx.peek(); t.Type {
-		case PAREN_R:
+		if peekToken(pctx, PAREN_R) {
 			loop = false
 			continue
 		}
 
-		var name string
-		switch t := pctx.next(); t.Type {
-		case NAME:
-			name = t.Value
-		default:
-			return nil, unexpectedToken(t, `object field arguments`, NAME)
+		name, err := consumeName(pctx)
+		if err != nil {
+			return nil, errors.Wrap(err, `object field arguments`)
 		}
 
-		switch t := pctx.next(); t.Type {
-		case COLON:
-		default:
-			return nil, unexpectedToken(t, `object field arguments`, COLON)
+		if _, err := consumeToken(pctx, COLON); err != nil {
+			return nil, errors.Wrap(err, `object field arguments`)
 		}
 
 		typ, err := pctx.parseType()
@@ -1017,8 +943,7 @@ func (pctx *parseCtx) parseObjectTypeDefinitionFieldArguments() (model.ObjectTyp
 
 		arg := model.NewObjectTypeDefinitionFieldArgument(name, typ)
 
-		switch t := pctx.peek(); t.Type {
-		case EQUALS:
+		if peekToken(pctx, EQUALS) {
 			// we have default
 			pctx.advance()
 			value, err := pctx.parseValue()
@@ -1030,58 +955,44 @@ func (pctx *parseCtx) parseObjectTypeDefinitionFieldArguments() (model.ObjectTyp
 
 		args = append(args, arg)
 	}
-	switch t := pctx.next(); t.Type {
-	case PAREN_R:
-	default:
-		return nil, unexpectedToken(t, `object field arguments`, PAREN_R)
+
+	if _, err := consumeToken(pctx, PAREN_R); err != nil {
+		return nil, errors.Wrap(err, `object field arguments`)
 	}
 
 	return args, nil
 }
 
 func (pctx *parseCtx) parseEnumDefinition() (*model.EnumDefinition, error) {
-	switch t := pctx.next(); t.Type {
-	case NAME:
-		if t.Value != enumKey {
-			return nil, unexpectedName(t, `enum`, enumKey)
-		}
-	default:
-		return nil, unexpectedToken(t, `enum`, NAME)
+	if _, err := consumeName(pctx, enumKey); err != nil {
+		return nil, errors.Wrap(err, `enum`)
 	}
 
-	var name string
-	switch t := pctx.next(); t.Type {
-	case NAME:
-		name = t.Value
-		// check for valid name
-	default:
-		return nil, unexpectedToken(t, `enum`, NAME)
+	name, err := consumeName(pctx)
+	if err != nil {
+		return nil, errors.Wrap(err, `enum`)
 	}
 
-	switch t := pctx.next(); t.Type {
-	case BRACE_L:
-	default:
-		return nil, unexpectedToken(t, `enum`, BRACE_L)
+	if _, err := consumeToken(pctx, BRACE_L); err != nil {
+		return nil, errors.Wrap(err, `enum`)
 	}
 
 	var elements []*model.EnumElement
 	for loop := true; loop; {
-		switch t := pctx.peek(); t.Type {
-		case BRACE_R:
+		if peekToken(pctx, BRACE_R) {
 			loop = false
 			continue
-		case NAME:
-			pctx.advance()
-			elements = append(elements, model.NewEnumElement(t.Value))
-		default:
-			return nil, unexpectedToken(t, `enum`, NAME)
 		}
+
+		elem, err := consumeName(pctx)
+		if err != nil {
+			return nil, errors.Wrap(err, `enum`)
+		}
+		elements = append(elements, model.NewEnumElement(elem))
 	}
 
-	switch t := pctx.next(); t.Type {
-	case BRACE_R:
-	default:
-		return nil, unexpectedToken(t, `enum`, BRACE_R)
+	if _, err := consumeToken(pctx, BRACE_R); err != nil {
+		return nil, errors.Wrap(err, `enum`)
 	}
 
 	def := model.NewEnumDefinition(name)
@@ -1105,8 +1016,7 @@ func (pctx *parseCtx) parseInterfaceDefinition() (*model.InterfaceDefinition, er
 
 	var fields []*model.InterfaceField
 	for loop := true; loop; {
-		switch t := pctx.peek(); t.Type {
-		case BRACE_R:
+		if peekToken(pctx, BRACE_R) {
 			loop = false
 			continue
 		}
@@ -1142,4 +1052,46 @@ func (pctx *parseCtx) parseInterfaceDefinitionField() (*model.InterfaceField, er
 	}
 
 	return model.NewInterfaceField(name, typ), nil
+}
+
+func (pctx *parseCtx) parseUnionDefinition() (*model.UnionDefinition, error) {
+	if _, err := consumeName(pctx, unionKey); err != nil {
+		return nil, errors.Wrap(err, `union`)
+	}
+
+	name, err := consumeName(pctx)
+	if err != nil {
+		return nil, errors.Wrap(err, `union`)
+	}
+
+	if _, err := consumeToken(pctx, EQUALS); err != nil {
+		return nil, errors.Wrap(err, `union`)
+	}
+
+	union := model.NewUnionDefinition(name)
+
+	typ, err := consumeName(pctx)
+	if err != nil {
+		return nil, errors.Wrap(err, `union`)
+	}
+
+	var types []string
+	types = append(types, typ)
+
+	for loop := true; loop; {
+		if !peekToken(pctx, PIPE) {
+			loop = false
+			continue
+		}
+		pctx.advance()
+
+		typ, err := consumeName(pctx)
+		if err != nil {
+			return nil, errors.Wrap(err, `union`)
+		}
+		types = append(types, typ)
+	}
+	union.AddTypes(types...)
+
+	return union, nil
 }

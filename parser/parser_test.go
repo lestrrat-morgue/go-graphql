@@ -193,5 +193,14 @@ type Droid implements Character {
   appearsIn: [Episode]!
   primaryFunction: String
 }`))
+	t.Run(parseSuccess(`query HeroForEpisode($ep: Episode!) {
+  hero(episode: $ep) {
+    name
+    ... on Droid {
+      primaryFunction
+    }
+  }
+}`))
+	t.Run(parseSuccess(`union SearchResult = Human | Droid | Starship`))
 }
  

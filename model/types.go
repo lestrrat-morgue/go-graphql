@@ -238,3 +238,32 @@ func (f InterfaceFieldList) Iterator() chan *InterfaceField {
 	return ch
 }
 
+func NewUnionDefinition(name string) *UnionDefinition {
+	return &UnionDefinition{
+		name: name,
+	}
+}
+
+func (def UnionDefinition) Name() string {
+	return def.name
+}
+
+func (def UnionDefinition) Types() chan string {
+	return def.types.Iterator()
+}
+func (def *UnionDefinition) AddTypes(list ...string) {
+	def.types.Add(list...)
+}
+
+func (s *StringList) Add(list ...string) {
+	*s = append(*s, list...)
+}
+
+func (s StringList) Iterator() chan string {
+	ch := make(chan string, len(s))
+	for _, e := range s {
+		ch <- e
+	}
+	close(ch)
+	return ch
+}

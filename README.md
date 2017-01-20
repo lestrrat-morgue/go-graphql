@@ -19,6 +19,7 @@ GraphQL for Go
   * Object
   * Enum
   * Interface
+  * Union
 
 ## PARSING (TODO)
 

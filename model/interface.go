@@ -178,3 +178,9 @@ type InterfaceField struct {
 }
 
 type InterfaceFieldList []*InterfaceField
+
+type StringList []string
+type UnionDefinition struct {
+	name string
+	types StringList
+}
