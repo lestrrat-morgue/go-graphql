@@ -71,3 +71,10 @@ func (v valueComponent) Value() Value {
 func (v *valueComponent) SetValue(newv Value) {
 	v.value = newv
 }
+
+type kindComponent Kind
+
+// Kind is implemented to allow embedding of Kind type into other structs
+func (k kindComponent) Kind() Kind {
+	return Kind(k)
+}

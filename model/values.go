@@ -86,19 +86,6 @@ func (v EnumValue) Value() interface{} {
 	return v.Name()
 }
 
-func (l *ObjectFieldList) Add(v ...*ObjectField) {
-	*l = append(*l, v...)
-}
-
-func (l ObjectFieldList) Iterator() chan *ObjectField {
-	ch := make(chan *ObjectField, len(l))
-	for _, f := range l {
-		ch <- f
-	}
-	close(ch)
-	return ch
-}
-
 func NewObjectField(name string, value Value) *ObjectField {
 	return &ObjectField{
 		nameComponent: nameComponent(name),

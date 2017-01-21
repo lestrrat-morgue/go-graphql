@@ -1,7 +1,5 @@
 package model
 
-type TypeList []Type
-type NamedTypeList []NamedType
 type Document struct {
 	definitions []Definition
 	types       TypeList
@@ -37,11 +35,13 @@ type Type interface {
 }
 
 type NamedType interface {
+	Kind() Kind
 	Name() string
 	Type
 }
 
 type namedType struct {
+	kindComponent
 	nullable
 	nameComponent
 }
@@ -56,7 +56,6 @@ type VariableDefinition struct {
 	typeComponent
 	defaultValueComponent
 }
-type VariableDefinitionList []*VariableDefinition
 
 type Value interface {
 	Value() interface{}
@@ -93,7 +92,6 @@ type ObjectField struct {
 	nameComponent
 	valueComponent
 }
-type ObjectFieldList []*ObjectField
 
 type ObjectValue struct {
 	fields ObjectFieldList
@@ -107,13 +105,11 @@ type Argument struct {
 	nameComponent
 	valueComponent
 }
-type ArgumentList []*Argument
 
 type Directive struct {
 	name      string
 	arguments ArgumentList
 }
-type DirectiveList []*Directive
 
 type Field struct {
 	nameComponent
@@ -143,7 +139,6 @@ type ObjectDefinition struct {
 	hasImplements bool
 	implements    NamedType
 }
-type ObjectDefinitionList []*ObjectDefinition
 
 type ObjectFieldArgumentDefinition struct {
 	nameComponent
@@ -151,15 +146,12 @@ type ObjectFieldArgumentDefinition struct {
 	defaultValueComponent
 }
 
-type ObjectFieldArgumentDefinitionList []*ObjectFieldArgumentDefinition
-
 type ObjectFieldDefinition struct {
 	nameComponent
 	typeComponent
 	arguments ObjectFieldArgumentDefinitionList
 }
 
-type ObjectFieldDefinitionList []*ObjectFieldDefinition
 
 type EnumDefinition struct {
 	nullable // is this kosher?
@@ -171,7 +163,6 @@ type EnumElementDefinition struct {
 	nameComponent
 	valueComponent
 }
-type EnumElementDefinitionList []*EnumElementDefinition
 
 type InterfaceDefinition struct {
 	nullable
@@ -183,8 +174,6 @@ type InterfaceFieldDefinition struct {
 	nameComponent
 	typeComponent
 }
-
-type InterfaceFieldDefinitionList []*InterfaceFieldDefinition
 
 type UnionDefinition struct {
 	nameComponent
@@ -201,11 +190,7 @@ type InputFieldDefinition struct {
 	typeComponent
 }
 
-type InputFieldDefinitionList []*InputFieldDefinition
-
 type Schema struct {
 	query *ObjectDefinition // But must be a query
 	types ObjectDefinitionList
 }
-
-

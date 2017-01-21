@@ -34,76 +34,11 @@ func NewListType(t Type) *ListType {
 	}
 }
 
-func (t *NamedTypeList) Add(list ...NamedType) {
-	*t = append(*t, list...)
-}
-
-func (t NamedTypeList) Iterator() chan NamedType {
-	ch := make(chan NamedType, len(t))
-	for _, f := range t {
-		ch <- f
-	}
-	close(ch)
-	return ch
-}
-
-func (t *TypeList) Add(list ...Type) {
-	*t = append(*t, list...)
-}
-
-func (t TypeList) Iterator() chan Type {
-	ch := make(chan Type, len(t))
-	for _, f := range t {
-		ch <- f
-	}
-	close(ch)
-	return ch
-}
-
-func (args *ObjectFieldArgumentDefinitionList) Add(list ...*ObjectFieldArgumentDefinition) {
-	*args = append(*args, list...)
-}
-
-func (args ObjectFieldArgumentDefinitionList) Iterator() chan *ObjectFieldArgumentDefinition {
-	ch := make(chan *ObjectFieldArgumentDefinition, len(args))
-	for _, arg := range args {
-		ch <- arg
-	}
-	close(ch)
-	return ch
-}
-
 func NewObjectFieldArgumentDefinition(name string, typ Type) *ObjectFieldArgumentDefinition {
 	return &ObjectFieldArgumentDefinition{
 		nameComponent: nameComponent(name),
 		typeComponent: typeComponent{typ: typ},
 	}
-}
-
-func (t *ObjectFieldDefinitionList) Add(list ...*ObjectFieldDefinition) {
-	*t = append(*t, list...)
-}
-
-func (t ObjectFieldDefinitionList) Iterator() chan *ObjectFieldDefinition {
-	ch := make(chan *ObjectFieldDefinition, len(t))
-	for _, f := range t {
-		ch <- f
-	}
-	close(ch)
-	return ch
-}
-
-func (l *ObjectDefinitionList) Add(list ...*ObjectDefinition) {
-	*l  = append(*l, list...)
-}
-
-func (l ObjectDefinitionList) Iterator() chan *ObjectDefinition {
-	ch := make(chan *ObjectDefinition, len(l))
-	for _, o := range l {
-		ch <- o
-	}
-	close(ch)
-	return ch
 }
 
 func NewObjectDefinition(name string) *ObjectDefinition {
@@ -171,19 +106,6 @@ func NewEnumElementDefinition(name string, value Value) *EnumElementDefinition {
 	}
 }
 
-func (e *EnumElementDefinitionList) Add(list ...*EnumElementDefinition) {
-	*e = append(*e, list...)
-}
-
-func (e EnumElementDefinitionList) Iterator() chan *EnumElementDefinition {
-	ch := make(chan *EnumElementDefinition, len(e))
-	for _, el := range e {
-		ch <- el
-	}
-	close(ch)
-	return ch
-}
-
 func NewInterfaceDefinition(name string) *InterfaceDefinition {
 	return &InterfaceDefinition{
 		nullable:      nullable(true),
@@ -217,19 +139,6 @@ func (f *InterfaceFieldDefinition) Type() Type {
 	return f.typ
 }
 
-func (f *InterfaceFieldDefinitionList) Add(list ...*InterfaceFieldDefinition) {
-	*f = append(*f, list...)
-}
-
-func (f InterfaceFieldDefinitionList) Iterator() chan *InterfaceFieldDefinition {
-	ch := make(chan *InterfaceFieldDefinition, len(f))
-	for _, field := range f {
-		ch <- field
-	}
-	close(ch)
-	return ch
-}
-
 func NewUnionDefinition(name string) *UnionDefinition {
 	return &UnionDefinition{
 		nameComponent: nameComponent(name),
@@ -261,17 +170,4 @@ func (def *InputDefinition) AddFields(list ...*InputFieldDefinition) {
 
 func (def InputDefinition) Fields() chan *InputFieldDefinition {
 	return def.fields.Iterator()
-}
-
-func (l *InputFieldDefinitionList) Add(list ...*InputFieldDefinition) {
-	*l = append(*l, list...)
-}
-
-func (l InputFieldDefinitionList) Iterator() chan *InputFieldDefinition {
-	ch := make(chan *InputFieldDefinition, len(l))
-	for _, e := range l {
-		ch <- e
-	}
-	close(ch)
-	return ch
 }
