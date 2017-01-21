@@ -1,6 +1,7 @@
 package model
 
 type TypeList []Type
+type NamedTypeList []NamedType
 type Document struct {
 	definitions []Definition
 	types       TypeList
@@ -25,7 +26,7 @@ type OperationDefinition struct {
 
 type FragmentDefinition struct {
 	nameComponent
-	typ        *NamedType
+	typeComponent
 	directives DirectiveList
 	selections SelectionSet
 }
@@ -35,7 +36,12 @@ type Type interface {
 	SetNullable(bool)
 }
 
-type NamedType struct {
+type NamedType interface {
+	Name() string
+	Type
+}
+
+type namedType struct {
 	nullable
 	nameComponent
 }
@@ -85,7 +91,7 @@ type EnumValue struct {
 // ObjectField represents a literal object's field (NOT a type)
 type ObjectField struct {
 	nameComponent
-	value Value
+	valueComponent
 }
 type ObjectFieldList []*ObjectField
 
@@ -99,7 +105,7 @@ type SelectionSet []Selection
 
 type Argument struct {
 	nameComponent
-	value Value
+	valueComponent
 }
 type ArgumentList []*Argument
 
@@ -126,17 +132,18 @@ type FragmentSpread struct {
 type InlineFragment struct {
 	directives DirectiveList
 	selections SelectionSet
-	typ        *NamedType
+	typ        NamedType
 }
-
 
 // ObjectDefinition is a definition of a new object type
 type ObjectDefinition struct {
+	nullable
 	nameComponent
 	fields        ObjectFieldDefinitionList
 	hasImplements bool
-	implements    string
+	implements    NamedType
 }
+type ObjectDefinitionList []*ObjectDefinition
 
 type ObjectFieldArgumentDefinition struct {
 	nameComponent
@@ -155,26 +162,29 @@ type ObjectFieldDefinition struct {
 type ObjectFieldDefinitionList []*ObjectFieldDefinition
 
 type EnumDefinition struct {
+	nullable // is this kosher?
 	nameComponent
-	elements EnumElementList
+	elements EnumElementDefinitionList
 }
 
-type EnumElement struct {
+type EnumElementDefinition struct {
 	nameComponent
+	valueComponent
 }
-type EnumElementList []*EnumElement
+type EnumElementDefinitionList []*EnumElementDefinition
 
 type InterfaceDefinition struct {
+	nullable
 	nameComponent
-	fields InterfaceFieldList
+	fields InterfaceFieldDefinitionList
 }
 
-type InterfaceField struct {
+type InterfaceFieldDefinition struct {
 	nameComponent
 	typeComponent
 }
 
-type InterfaceFieldList []*InterfaceField
+type InterfaceFieldDefinitionList []*InterfaceFieldDefinition
 
 type UnionDefinition struct {
 	nameComponent
@@ -192,3 +202,10 @@ type InputFieldDefinition struct {
 }
 
 type InputFieldDefinitionList []*InputFieldDefinition
+
+type Schema struct {
+	query *ObjectDefinition // But must be a query
+	types ObjectDefinitionList
+}
+
+

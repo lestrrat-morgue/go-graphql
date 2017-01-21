@@ -21,11 +21,11 @@ GraphQL for Go
   * Interface
   * Union
   * Input
+  * Schema
 
-## PARSING (TODO)
+## DSL
 
-* Type Definitions
-  * schema
+We have a DSL to build the schema. See this file [dsl_test.go](./dsl/dsl_test.go)
 
 ## BENCHMARK
 

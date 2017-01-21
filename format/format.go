@@ -19,10 +19,10 @@ func GraphQL(dst io.Writer, v interface{}) error {
 	switch v.(type) {
 	case *model.Document:
 		return ctx.fmtDocument(dst, v.(*model.Document))
-	case *model.VariableDefinition:
-		return ctx.fmtVariableDefinition(dst, v.(*model.VariableDefinition))
+	case *model.Schema:
+		return ctx.fmtSchema(dst, v.(*model.Schema))
 	default:
-		return errors.New(`unknown grahql type`)
+		return errors.Errorf(`unknown grahql type: %T`, v)
 	}
 }
 
@@ -46,6 +46,57 @@ func (ctx *fmtCtx) leave() {
 	}
 }
 
+func (ctx *fmtCtx) fmtSchema(dst io.Writer, v *model.Schema) error {
+	var buf bytes.Buffer
+
+	if ch := v.Types(); len(ch) > 0 {
+		for typ := range ch {
+			if err := ctx.fmtObjectDefinition(&buf, typ); err != nil {
+				return errors.Wrap(err, `failed to format type`)
+			}
+			buf.WriteString("\n\n")
+		}
+	}
+
+	if err := ctx.fmtObjectDefinition(&buf, v.Query()); err != nil {
+		return errors.Wrap(err, `failed to format query`)
+	}
+	buf.WriteString("\n\n")
+
+	buf.WriteString("schema {")
+	// Schema should assume that the definition of types has already
+	// been done elsewhere, so we only print the names
+	ctx.enterleave(func() error {
+		buf.WriteByte('\n')
+		buf.Write(ctx.indent())
+		buf.WriteString("query: ")
+		buf.WriteString(v.Query().Name())
+
+		if ch := v.Types(); len(ch) > 0 {
+			buf.WriteByte('\n')
+			buf.Write(ctx.indent())
+			buf.WriteString("types: [")
+			l := len(ch)
+			i := 0;
+			for typ := range ch {
+				buf.WriteString(typ.Name())
+				if l - 1 > i {
+					buf.WriteString(", ")
+				}
+				i++
+			}
+			buf.WriteByte(']')
+		}
+		return nil
+	})
+	buf.WriteString("\n}")
+
+	if _, err := buf.WriteTo(dst); err != nil {
+		return errors.Wrap(err, `failed to write to destination`)
+	}
+	return nil
+}
+	
 func (ctx *fmtCtx) fmtDocument(dst io.Writer, v *model.Document) error {
 	var buf bytes.Buffer
 	for def := range v.Definitions() {
@@ -98,7 +149,7 @@ func (ctx *fmtCtx) fmtFragmentDefinition(dst io.Writer, v *model.FragmentDefinit
 	buf.WriteString(v.Name())
 	buf.WriteByte(' ')
 
-	if err := ctx.fmtTypeCondition(&buf, v.Type()); err != nil {
+	if err := ctx.fmtTypeCondition(&buf, v.Type().(model.NamedType)); err != nil {
 		return errors.Wrap(err, `failed to format type condition`)
 	}
 
@@ -118,7 +169,7 @@ func (ctx *fmtCtx) fmtFragmentDefinition(dst io.Writer, v *model.FragmentDefinit
 	return nil
 }
 
-func (ctx *fmtCtx) fmtTypeCondition(dst io.Writer, typ *model.NamedType) error {
+func (ctx *fmtCtx) fmtTypeCondition(dst io.Writer, typ model.NamedType) error {
 	var buf bytes.Buffer
 	buf.WriteString("on ")
 	buf.WriteString(typ.Name())
@@ -409,8 +460,8 @@ func (ctx *fmtCtx) fmtValue(dst io.Writer, v model.Value) error {
 
 func (ctx *fmtCtx) fmtType(dst io.Writer, v model.Type) error {
 	switch v.(type) {
-	case *model.NamedType:
-		return ctx.fmtNamedType(dst, v.(*model.NamedType))
+	case model.NamedType:
+		return ctx.fmtNamedType(dst, v.(model.NamedType))
 	case *model.ListType:
 		return ctx.fmtListType(dst, v.(*model.ListType))
 	default:
@@ -418,7 +469,7 @@ func (ctx *fmtCtx) fmtType(dst io.Writer, v model.Type) error {
 	}
 }
 
-func (ctx *fmtCtx) fmtNamedType(dst io.Writer, v *model.NamedType) error {
+func (ctx *fmtCtx) fmtNamedType(dst io.Writer, v model.NamedType) error {
 	var buf bytes.Buffer
 	buf.WriteString(v.Name())
 	if !v.IsNullable() {
@@ -480,7 +531,7 @@ func (ctx *fmtCtx) fmtObjectDefinition(dst io.Writer, v *model.ObjectDefinition)
 	buf.WriteString(v.Name())
 	if v.HasImplements() {
 		buf.WriteString(" implements ")
-		buf.WriteString(v.Implements())
+		buf.WriteString(v.Implements().(model.NamedType).Name())
 	}
 	buf.WriteString(" {")
 	err := ctx.enterleave(func() error {
@@ -563,7 +614,7 @@ func (ctx *fmtCtx) fmtEnumDefinition(dst io.Writer, v *model.EnumDefinition) err
 	buf.WriteString(v.Name())
 	buf.WriteString(" {")
 	err := ctx.enterleave(func() error {
-		return errors.Wrap(ctx.fmtEnumElementList(&buf, v.Elements()), `failed to format enum element`)
+		return errors.Wrap(ctx.fmtEnumElementDefinitionList(&buf, v.Elements()), `failed to format enum element`)
 	})
 	if err != nil {
 		return err
@@ -577,7 +628,7 @@ func (ctx *fmtCtx) fmtEnumDefinition(dst io.Writer, v *model.EnumDefinition) err
 
 }
 
-func (ctx *fmtCtx) fmtEnumElementList(dst io.Writer, ech chan *model.EnumElement) error {
+func (ctx *fmtCtx) fmtEnumElementDefinitionList(dst io.Writer, ech chan *model.EnumElementDefinition) error {
 	var buf bytes.Buffer
 	for e := range ech {
 		buf.WriteByte('\n')
@@ -600,7 +651,7 @@ func (ctx *fmtCtx) fmtInterfaceDefinition(dst io.Writer, v *model.InterfaceDefin
 		for f := range v.Fields() {
 			buf.WriteByte('\n')
 			buf.Write(ctx.indent())
-			if err := ctx.fmtInterfaceDefinitionField(&buf, f); err != nil {
+			if err := ctx.fmtInterfaceFieldDefinition(&buf, f); err != nil {
 				return errors.Wrap(err, `failed to format interface field`)
 			}
 		}
@@ -616,7 +667,7 @@ func (ctx *fmtCtx) fmtInterfaceDefinition(dst io.Writer, v *model.InterfaceDefin
 	return nil
 }
 
-func (ctx *fmtCtx) fmtInterfaceDefinitionField(dst io.Writer, v *model.InterfaceField) error {
+func (ctx *fmtCtx) fmtInterfaceFieldDefinition(dst io.Writer, v *model.InterfaceFieldDefinition) error {
 	var buf bytes.Buffer
 
 	buf.WriteString(v.Name())

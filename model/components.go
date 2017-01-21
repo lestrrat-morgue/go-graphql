@@ -59,3 +59,15 @@ func (v *defaultValueComponent) RemoveDefaultValue() {
 	v.valid = false
 	v.value = nil
 }
+
+type valueComponent struct {
+	value Value
+}
+
+func (v valueComponent) Value() Value {
+	return v.value
+}
+
+func (v *valueComponent) SetValue(newv Value) {
+	v.value = newv
+}

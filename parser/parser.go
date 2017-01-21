@@ -532,7 +532,7 @@ func (pctx *parseCtx) parseValue() (model.Value, error) {
 		return model.NewVariable(name), nil
 	case INT:
 		pctx.advance()
-		return model.NewIntValue(t.Value)
+		return model.ParseIntValue(t.Value)
 	case FLOAT:
 		pctx.advance()
 		return model.NewFloatValue(t.Value)
@@ -982,7 +982,8 @@ func (pctx *parseCtx) parseEnumDefinition() (*model.EnumDefinition, error) {
 		return nil, errors.Wrap(err, `enum`)
 	}
 
-	var elements []*model.EnumElement
+	var elements []*model.EnumElementDefinition
+	var val = 1
 	for loop := true; loop; {
 		if peekToken(pctx, BRACE_R) {
 			loop = false
@@ -993,7 +994,8 @@ func (pctx *parseCtx) parseEnumDefinition() (*model.EnumDefinition, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, `enum`)
 		}
-		elements = append(elements, model.NewEnumElement(elem))
+		elements = append(elements, model.NewEnumElementDefinition(elem, model.NewIntValue(val)))
+		val++
 	}
 
 	if _, err := consumeToken(pctx, BRACE_R); err != nil {

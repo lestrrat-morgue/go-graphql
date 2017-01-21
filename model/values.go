@@ -16,14 +16,18 @@ func (v Variable) Value() interface{} {
 	return v.Name()
 }
 
-func NewIntValue(s string) (*IntValue, error) {
+func ParseIntValue(s string) (*IntValue, error) {
 	v, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
 		return nil, errors.Wrap(err, `failed to parse int`)
 	}
+	return NewIntValue(int(v)), nil
+}
+
+func NewIntValue(v int) *IntValue {
 	return &IntValue{
-		value: int(v),
-	}, nil
+		value: v,
+	}
 }
 
 func (v IntValue) Value() interface{} {
@@ -98,12 +102,8 @@ func (l ObjectFieldList) Iterator() chan *ObjectField {
 func NewObjectField(name string, value Value) *ObjectField {
 	return &ObjectField{
 		nameComponent: nameComponent(name),
-		value: value,
+		valueComponent: valueComponent{value: value},
 	}
-}
-
-func (f ObjectField) Value() Value {
-	return f.value
 }
 
 func NewObjectValue() *ObjectValue {

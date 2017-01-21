@@ -12,11 +12,11 @@ func (f *InlineFragment) AddDirectives(list ...*Directive) {
 	f.directives.Add(list...)
 }
 
-func (f *InlineFragment) SetTypeCondition(typ *NamedType) {
+func (f *InlineFragment) SetTypeCondition(typ NamedType) {
 	f.typ = typ
 }
 
-func (f InlineFragment) Type() *NamedType {
+func (f InlineFragment) Type() NamedType {
 	return f.typ
 }
 
@@ -28,10 +28,10 @@ func (f InlineFragment) Directives() chan *Directive {
 	return f.directives.Iterator()
 }
 
-func NewFragmentDefinition(name string, typ *NamedType) *FragmentDefinition {
+func NewFragmentDefinition(name string, typ NamedType) *FragmentDefinition {
 	return &FragmentDefinition{
 		nameComponent: nameComponent(name),
-		typ:           typ,
+		typeComponent: typeComponent{typ: typ},
 	}
 }
 
@@ -41,10 +41,6 @@ func (f FragmentDefinition) SelectionSet() chan Selection {
 
 func (f *FragmentDefinition) AddSelections(selections ...Selection) {
 	f.selections.Add(selections...)
-}
-
-func (def FragmentDefinition) Type() *NamedType {
-	return def.typ
 }
 
 func (def *FragmentDefinition) AddDirectives(list ...*Directive) {

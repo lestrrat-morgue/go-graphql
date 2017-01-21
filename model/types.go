@@ -1,7 +1,27 @@
 package model
 
-func NewNamedType(name string) *NamedType {
-	return &NamedType{
+func NewSchema() *Schema {
+	return &Schema{}
+}
+
+func (s Schema) Query() *ObjectDefinition {
+	return s.query
+}
+
+func (s Schema) Types() chan *ObjectDefinition {
+	return s.types.Iterator()
+}
+
+func (s *Schema) SetQuery(q *ObjectDefinition) {
+	s.query = q
+}
+
+func (s *Schema) AddTypes(list ...*ObjectDefinition) {
+	s.types.Add(list...)
+}
+
+func NewNamedType(name string) NamedType {
+	return &namedType{
 		nameComponent: nameComponent(name),
 		nullable:      true,
 	}
@@ -12,6 +32,19 @@ func NewListType(t Type) *ListType {
 		nullable:      true,
 		typeComponent: typeComponent{typ: t},
 	}
+}
+
+func (t *NamedTypeList) Add(list ...NamedType) {
+	*t = append(*t, list...)
+}
+
+func (t NamedTypeList) Iterator() chan NamedType {
+	ch := make(chan NamedType, len(t))
+	for _, f := range t {
+		ch <- f
+	}
+	close(ch)
+	return ch
 }
 
 func (t *TypeList) Add(list ...Type) {
@@ -60,9 +93,23 @@ func (t ObjectFieldDefinitionList) Iterator() chan *ObjectFieldDefinition {
 	return ch
 }
 
+func (l *ObjectDefinitionList) Add(list ...*ObjectDefinition) {
+	*l  = append(*l, list...)
+}
+
+func (l ObjectDefinitionList) Iterator() chan *ObjectDefinition {
+	ch := make(chan *ObjectDefinition, len(l))
+	for _, o := range l {
+		ch <- o
+	}
+	close(ch)
+	return ch
+}
+
 func NewObjectDefinition(name string) *ObjectDefinition {
 	return &ObjectDefinition{
 		nameComponent: nameComponent(name),
+		nullable: nullable(true),
 	}
 }
 
@@ -81,16 +128,16 @@ func NewObjectFieldDefinition(name string, typ Type) *ObjectFieldDefinition {
 	}
 }
 
-func (t *ObjectDefinition) SetImplements(n string) {
+func (t *ObjectDefinition) SetImplements(typ NamedType) {
 	t.hasImplements = true
-	t.implements = n
+	t.implements = typ
 }
 
 func (t ObjectDefinition) HasImplements() bool {
 	return t.hasImplements
 }
 
-func (t ObjectDefinition) Implements() string {
+func (t ObjectDefinition) Implements() NamedType {
 	return t.implements
 }
 
@@ -105,29 +152,31 @@ func (t ObjectFieldDefinition) Arguments() chan *ObjectFieldArgumentDefinition {
 func NewEnumDefinition(name string) *EnumDefinition {
 	return &EnumDefinition{
 		nameComponent: nameComponent(name),
+		nullable:      nullable(true),
 	}
 }
 
-func (t *EnumDefinition) AddElements(list ...*EnumElement) {
+func (t *EnumDefinition) AddElements(list ...*EnumElementDefinition) {
 	t.elements.Add(list...)
 }
 
-func (t *EnumDefinition) Elements() chan *EnumElement {
+func (t *EnumDefinition) Elements() chan *EnumElementDefinition {
 	return t.elements.Iterator()
 }
 
-func NewEnumElement(name string) *EnumElement {
-	return &EnumElement{
-		nameComponent: nameComponent(name),
+func NewEnumElementDefinition(name string, value Value) *EnumElementDefinition {
+	return &EnumElementDefinition{
+		nameComponent:  nameComponent(name),
+		valueComponent: valueComponent{value: value},
 	}
 }
 
-func (e *EnumElementList) Add(list ...*EnumElement) {
+func (e *EnumElementDefinitionList) Add(list ...*EnumElementDefinition) {
 	*e = append(*e, list...)
 }
 
-func (e EnumElementList) Iterator() chan *EnumElement {
-	ch := make(chan *EnumElement, len(e))
+func (e EnumElementDefinitionList) Iterator() chan *EnumElementDefinition {
+	ch := make(chan *EnumElementDefinition, len(e))
 	for _, el := range e {
 		ch <- el
 	}
@@ -137,35 +186,43 @@ func (e EnumElementList) Iterator() chan *EnumElement {
 
 func NewInterfaceDefinition(name string) *InterfaceDefinition {
 	return &InterfaceDefinition{
+		nullable:      nullable(true),
 		nameComponent: nameComponent(name),
 	}
 }
 
-func (iface InterfaceDefinition) Fields() chan *InterfaceField {
+type Resolver interface {
+	Resolve(interface{}) Type
+}
+
+func (iface *InterfaceDefinition) SetTypeResolver(v Resolver) {}
+func (iface *InterfaceDefinition) TypeResolver() Resolver     { return nil }
+
+func (iface InterfaceDefinition) Fields() chan *InterfaceFieldDefinition {
 	return iface.fields.Iterator()
 }
 
-func (iface *InterfaceDefinition) AddFields(list ...*InterfaceField) {
+func (iface *InterfaceDefinition) AddFields(list ...*InterfaceFieldDefinition) {
 	iface.fields.Add(list...)
 }
 
-func NewInterfaceField(name string, typ Type) *InterfaceField {
-	return &InterfaceField{
+func NewInterfaceFieldDefinition(name string, typ Type) *InterfaceFieldDefinition {
+	return &InterfaceFieldDefinition{
 		nameComponent: nameComponent(name),
 		typeComponent: typeComponent{typ: typ},
 	}
 }
 
-func (f *InterfaceField) Type() Type {
+func (f *InterfaceFieldDefinition) Type() Type {
 	return f.typ
 }
 
-func (f *InterfaceFieldList) Add(list ...*InterfaceField) {
+func (f *InterfaceFieldDefinitionList) Add(list ...*InterfaceFieldDefinition) {
 	*f = append(*f, list...)
 }
 
-func (f InterfaceFieldList) Iterator() chan *InterfaceField {
-	ch := make(chan *InterfaceField, len(f))
+func (f InterfaceFieldDefinitionList) Iterator() chan *InterfaceFieldDefinition {
+	ch := make(chan *InterfaceFieldDefinition, len(f))
 	for _, field := range f {
 		ch <- field
 	}
@@ -218,5 +275,3 @@ func (l InputFieldDefinitionList) Iterator() chan *InputFieldDefinition {
 	close(ch)
 	return ch
 }
-
-

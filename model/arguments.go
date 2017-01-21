@@ -15,11 +15,7 @@ func (args ArgumentList) Iterator() chan *Argument {
 
 func NewArgument(name string, value Value) *Argument {
 	return &Argument{
-		nameComponent: nameComponent(name),
-		value:         value,
+		nameComponent:  nameComponent(name),
+		valueComponent: valueComponent{value: value},
 	}
-}
-
-func (arg Argument) Value() Value {
-	return arg.value
 }
