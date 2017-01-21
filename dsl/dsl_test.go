@@ -45,37 +45,37 @@ func TestStarWars(t *testing.T) {
 		ObjectField(
 			`name`,
 			String(),
-      Description(`The name of the human.`),
-    ),
+			Description(`The name of the human.`),
+		),
 		ObjectField(
 			`friends`,
 			List(characterInterfaceDef.Type()),
 			Description(`'The friends of the human, or an empty list if they have none.`),
 			// resolve: human => getFriends(human),
-    ),
-    ObjectField(
+		),
+		ObjectField(
 			`appearsIn`,
 			List(episodeEnum),
-      Description(`Which movies they appear in.`),
-    ),
+			Description(`Which movies they appear in.`),
+		),
 		ObjectField(
 			`homePlanet`,
 			String(),
-      Description(`The home planet of the human, or null if unknown.`),
+			Description(`The home planet of the human, or null if unknown.`),
 		),
-    ObjectField(
+		ObjectField(
 			`secretBackstory`,
-      String(),
-      Description(`Where are they from and how they came to be who they are.`),
+			String(),
+			Description(`Where are they from and how they came to be who they are.`),
 			// resolve() {
-      //  throw new Error('secretBackstory is secret.');
-      //},
-    ),
+			//  throw new Error('secretBackstory is secret.');
+			//},
+		),
 	).Type()
 
 	var droidType = droidTypeDef.Configure(
 		Implements(characterInterfaceDef.Type()),
-	  Description(`A mechanical creature in the Star Wars universe.`),
+		Description(`A mechanical creature in the Star Wars universe.`),
 		ObjectField(
 			`id`,
 			NotNull(String()),
@@ -84,68 +84,68 @@ func TestStarWars(t *testing.T) {
 		ObjectField(
 			`name`,
 			String(),
-      Description(`The name of the droid.`),
-    ),
+			Description(`The name of the droid.`),
+		),
 		ObjectField(
 			`friends`,
 			List(characterInterfaceDef.Type()),
 			Description(`'The friends of the droid, or an empty list if they have none.`),
 			// resolve: droid => getFriends(droid),
-    ),
-    ObjectField(
+		),
+		ObjectField(
 			`appearsIn`,
 			List(episodeEnum),
-      Description(`Which movies they appear in.`),
-    ),
+			Description(`Which movies they appear in.`),
+		),
 		ObjectField(
 			`homePlanet`,
 			String(),
-      Description(`The home planet of the droid, or null if unknown.`),
+			Description(`The home planet of the droid, or null if unknown.`),
 		),
-    ObjectField(
+		ObjectField(
 			`secretBackstory`,
-      String(),
-      Description(`Where are they from and how they came to be who they are.`),
+			String(),
+			Description(`Where are they from and how they came to be who they are.`),
 			// resolve() {
-      //  throw new Error('secretBackstory is secret.');
-      //},
-    ),
+			//  throw new Error('secretBackstory is secret.');
+			//},
+		),
 		ObjectField(
 			`primaryFunction`,
-      String(),
-      Description(`The primary function of the droid.`),
-    ),
+			String(),
+			Description(`The primary function of the droid.`),
+		),
 	).Type()
 
 	var characterInterface = characterInterfaceDef.Configure(
-			Description(`A character in the Star Wars Trilogy`),
-			InterfaceField(
-				`id`,
-				NotNull(String()),
-				Description(`The id of the character.`),
-			),
-			InterfaceField(
-				`name`,
-				String(),
-				Description(`The name of the character.`),
-			),
-			InterfaceField(
-				`friends`,
-				List(characterInterfaceDef.Type()),
-				Description(`The friends of the character, or an empty list if they have none.`),
-			),
-			InterfaceField(
-				`appearsIn`,
-				List(episodeEnum),
-				Description(`Which movies they appear in.`),
-			),
-			InterfaceField(
-				`secretBackstory`,
-				String(),
-				Description(`All secrets about their past.`),
-			),
-		).Type()
-	
+		Description(`A character in the Star Wars Trilogy`),
+		InterfaceField(
+			`id`,
+			NotNull(String()),
+			Description(`The id of the character.`),
+		),
+		InterfaceField(
+			`name`,
+			String(),
+			Description(`The name of the character.`),
+		),
+		InterfaceField(
+			`friends`,
+			List(characterInterfaceDef.Type()),
+			Description(`The friends of the character, or an empty list if they have none.`),
+		),
+		InterfaceField(
+			`appearsIn`,
+			List(episodeEnum),
+			Description(`Which movies they appear in.`),
+		),
+		InterfaceField(
+			`secretBackstory`,
+			String(),
+			Description(`All secrets about their past.`),
+		),
+	).Type()
+
 	/*
 	     resolveType(character) {
 	       if (character.type === 'Human') {
@@ -158,7 +158,7 @@ func TestStarWars(t *testing.T) {
 	   });
 	*/
 
-  var queryType = queryTypeDef.Configure(
+	var queryType = queryTypeDef.Configure(
 		ObjectField(
 			`hero`,
 			characterInterface,
@@ -166,31 +166,30 @@ func TestStarWars(t *testing.T) {
 				`episode`,
 				episodeEnum,
 				Description(`If omitted, returns the hero of the whole saga. If provided, returns the hero of that particular episode.`),
-      ),
-      //resolve: (root, { episode }) => getHero(episode),
-    ),
+			),
+			//resolve: (root, { episode }) => getHero(episode),
+		),
 		ObjectField(
 			`human`,
 			humanType,
-      ObjectFieldArgument(
+			ObjectFieldArgument(
 				`id`,
 				NotNull(String()),
-        Description(`id of the human`),
-      ),
-      // resolve: (root, { id }) => getHuman(id),
-    ),
-    ObjectField(
+				Description(`id of the human`),
+			),
+			// resolve: (root, { id }) => getHuman(id),
+		),
+		ObjectField(
 			`droid`,
-      droidType,
-      ObjectFieldArgument(
+			droidType,
+			ObjectFieldArgument(
 				`id`,
-        NotNull(String()),
-        Description(`id of the droid`),
-      ),
-      // resolve: (root, { id }) => getDroid(id),
-    ),
-  ).Type()
-
+				NotNull(String()),
+				Description(`id of the droid`),
+			),
+			// resolve: (root, { id }) => getDroid(id),
+		),
+	).Type()
 
 	schema := Schema(
 		episodeEnum,
