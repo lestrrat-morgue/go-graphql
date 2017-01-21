@@ -1,11 +1,15 @@
 package model
 
-type Document struct {
-	definitions []Definition
-	types       TypeList
+type Definition interface {}
+type Document interface {
+	Definitions() chan Definition
+	AddDefinitions(...Definition)
+}
+type document struct {
+	definitions DefinitionList
+	types TypeList
 }
 
-type Definition interface{}
 type OperationType string
 
 const (
@@ -35,7 +39,6 @@ type Type interface {
 }
 
 type NamedType interface {
-	Kind() Kind
 	Name() string
 	Type
 }

@@ -103,7 +103,7 @@ func peekName(pctx *parseCtx, name string) bool {
 	}
 }
 
-func (p *Parser) Parse(ctx context.Context, src []byte) (*model.Document, error) {
+func (p *Parser) Parse(ctx context.Context, src []byte) (model.Document, error) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
@@ -186,7 +186,7 @@ func (pctx *parseCtx) lookupType(n string) (model.NamedType, error) {
 	return typ, nil
 }
 
-func (pctx *parseCtx) parseDocument() (*model.Document, error) {
+func (pctx *parseCtx) parseDocument() (model.Document, error) {
 	doc := model.NewDocument()
 	for {
 		switch t := pctx.peek(); t.Type {

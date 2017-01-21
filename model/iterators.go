@@ -32,6 +32,21 @@ func (v DirectiveList) Iterator() chan *Directive {
 	return ch
 }
 
+type DefinitionList []Definition
+
+func (l *DefinitionList) Add(list ...Definition) {
+	*l = append(*l, list...)
+}
+
+func (v DefinitionList) Iterator() chan Definition {
+	ch := make(chan Definition, len(v))
+	for _, e := range v {
+		ch <- e
+	}
+	close(ch)
+	return ch
+}
+
 type NamedTypeList []NamedType
 
 func (l *NamedTypeList) Add(list ...NamedType) {

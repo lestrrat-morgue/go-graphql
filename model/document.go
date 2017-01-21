@@ -1,18 +1,13 @@
 package model
 
-func NewDocument() *Document {
-	return &Document{}
+func NewDocument() Document {
+	return &document{}
 }
 
-func (doc *Document) AddDefinitions(defs ...Definition) {
-	doc.definitions = append(doc.definitions, defs...)
+func (doc *document) AddDefinitions(list ...Definition) {
+	doc.definitions.Add(list...)
 }
 
-func (doc Document) Definitions() chan Definition {
-	ch := make(chan Definition, len(doc.definitions))
-	for _, def := range doc.definitions {
-		ch <- def
-	}
-	close(ch)
-	return ch
+func (doc document) Definitions() chan Definition {
+	return doc.definitions.Iterator()
 }

@@ -24,6 +24,7 @@ func _main() error {
 	var iters = []iterspec{
 		{Name: "Argument"},
 		{Name: "Directive"},
+		{Name: "Definition", Interface: true},
 		{Name: "NamedType", Interface: true},
 		{Name: "Type", Interface: true},
 		{Name: "VariableDefinition"},

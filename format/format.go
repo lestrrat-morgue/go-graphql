@@ -17,8 +17,8 @@ type fmtCtx struct {
 func GraphQL(dst io.Writer, v interface{}) error {
 	var ctx fmtCtx
 	switch v.(type) {
-	case *model.Document:
-		return ctx.fmtDocument(dst, v.(*model.Document))
+	case model.Document:
+		return ctx.fmtDocument(dst, v.(model.Document))
 	case *model.Schema:
 		return ctx.fmtSchema(dst, v.(*model.Schema))
 	default:
@@ -97,7 +97,7 @@ func (ctx *fmtCtx) fmtSchema(dst io.Writer, v *model.Schema) error {
 	return nil
 }
 	
-func (ctx *fmtCtx) fmtDocument(dst io.Writer, v *model.Document) error {
+func (ctx *fmtCtx) fmtDocument(dst io.Writer, v model.Document) error {
 	var buf bytes.Buffer
 	for def := range v.Definitions() {
 		if buf.Len() > 0 {
