@@ -112,7 +112,7 @@ func (p *Parser) Parse(ctx context.Context, src []byte) (*model.Document, error)
 	pctx.lexsrc = NewLexer(src)
 	pctx.peekCount = -1
 	pctx.peekTokens = [3]Token{}
-	pctx.types = make(map[string]*model.NamedType)
+	pctx.types = make(map[string]model.NamedType)
 
 	doc, err := pctx.parseDocument()
 	if err != nil {
@@ -127,7 +127,7 @@ type parseCtx struct {
 	lexsrc     *Lexer
 	peekCount  int
 	peekTokens [3]Token
-	types      map[string]*model.NamedType
+	types      map[string]model.NamedType
 }
 
 var eofToken = Token{
@@ -172,12 +172,12 @@ func (pctx *parseCtx) next() *Token {
 	return t
 }
 
-func (pctx *parseCtx) registerType(t *model.NamedType) error {
+func (pctx *parseCtx) registerType(t model.NamedType) error {
 	pctx.types[t.Name()] = t
 	return nil
 }
 
-func (pctx *parseCtx) lookupType(n string) (*model.NamedType, error) {
+func (pctx *parseCtx) lookupType(n string) (model.NamedType, error) {
 	typ, ok := pctx.types[n]
 	if !ok {
 		return nil, errors.Errorf(`type %s not found`, n)
@@ -252,7 +252,7 @@ func (pctx *parseCtx) parseDocument() (*model.Document, error) {
 	return nil, errors.New("error for now")
 }
 
-func (pctx *parseCtx) parseTypeCondition() (*model.NamedType, error) {
+func (pctx *parseCtx) parseTypeCondition() (model.NamedType, error) {
 	if _, err := consumeName(pctx, onKey); err != nil {
 		return nil, errors.Wrap(err, `type condition`)
 	}
@@ -261,7 +261,7 @@ func (pctx *parseCtx) parseTypeCondition() (*model.NamedType, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, `failed to parse named type`)
 	}
-	return typ.(*model.NamedType), nil
+	return typ.(model.NamedType), nil
 }
 
 func (pctx *parseCtx) parseFragmentName() (string, error) {
@@ -472,7 +472,7 @@ func (pctx *parseCtx) parseType() (model.Type, error) {
 	return typ, nil
 }
 
-func (pctx *parseCtx) parseNamedType() (model.Type, error) {
+func (pctx *parseCtx) parseNamedType() (model.NamedType, error) {
 	typname, err := consumeName(pctx)
 	if err != nil {
 		return nil, errors.Wrap(err, `named type`)
@@ -761,7 +761,7 @@ func (pctx *parseCtx) parseFragmentSpread() (*model.FragmentSpread, error) {
 //   ...TypeCondition? tDirectives? SelectionSet
 func (pctx *parseCtx) parseInlineFragment() (*model.InlineFragment, error) {
 	// Assumes ... has already been consumed
-	var typ *model.NamedType
+	var typ model.NamedType
 	if peekName(pctx, onKey) {
 		var err error
 		typ, err = pctx.parseTypeCondition()
@@ -849,13 +849,13 @@ func (pctx *parseCtx) parseObjectDefinition() (*model.ObjectDefinition, error) {
 		return nil, errors.Wrap(err, `object type`)
 	}
 
-	var implName string
+	var implType model.NamedType
 	if peekName(pctx, implementsKey) {
 		if _, err := consumeName(pctx, implementsKey); err != nil {
 			return nil, errors.Wrap(err, `object type`)
 		}
 
-		implName, err = consumeName(pctx)
+		implType, err = pctx.parseNamedType()
 		if err != nil {
 			return nil, errors.Wrap(err, `object type`)
 		}
@@ -885,8 +885,8 @@ func (pctx *parseCtx) parseObjectDefinition() (*model.ObjectDefinition, error) {
 
 	def := model.NewObjectDefinition(name)
 	def.AddFields(fields...)
-	if len(implName) > 0 {
-		def.SetImplements(implName)
+	if implType != nil {
+		def.SetImplements(implType)
 	}
 	return def, nil
 }
@@ -1021,7 +1021,7 @@ func (pctx *parseCtx) parseInterfaceDefinition() (*model.InterfaceDefinition, er
 		return nil, errors.Wrap(err, `interface`)
 	}
 
-	var fields []*model.InterfaceField
+	var fields []*model.InterfaceFieldDefinition
 	for loop := true; loop; {
 		if peekToken(pctx, BRACE_R) {
 			loop = false
@@ -1043,7 +1043,7 @@ func (pctx *parseCtx) parseInterfaceDefinition() (*model.InterfaceDefinition, er
 	return iface, nil
 }
 
-func (pctx *parseCtx) parseInterfaceDefinitionField() (*model.InterfaceField, error) {
+func (pctx *parseCtx) parseInterfaceDefinitionField() (*model.InterfaceFieldDefinition, error) {
 	name, err := consumeName(pctx)
 	if err != nil {
 		return nil, errors.Wrap(err, `interface field`)
@@ -1058,7 +1058,7 @@ func (pctx *parseCtx) parseInterfaceDefinitionField() (*model.InterfaceField, er
 		return nil, errors.Wrap(err, `interface field`)
 	}
 
-	return model.NewInterfaceField(name, typ), nil
+	return model.NewInterfaceFieldDefinition(name, typ), nil
 }
 
 func (pctx *parseCtx) parseUnionDefinition() (*model.UnionDefinition, error) {
