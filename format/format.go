@@ -129,8 +129,8 @@ func (ctx *fmtCtx) fmtDocument(dst io.Writer, v model.Document) error {
 			if err := ctx.fmtUnionDefinition(&buf, def.(*model.UnionDefinition)); err != nil {
 				return errors.Wrap(err, `failed to format union definition`)
 			}
-		case *model.InputDefinition:
-			if err := ctx.fmtInputDefinition(&buf, def.(*model.InputDefinition)); err != nil {
+		case model.InputDefinition:
+			if err := ctx.fmtInputDefinition(&buf, def.(model.InputDefinition)); err != nil {
 				return errors.Wrap(err, `failed to format input definition`)
 			}
 		}
@@ -710,7 +710,7 @@ func (ctx *fmtCtx) fmtUnionDefinition(dst io.Writer, v *model.UnionDefinition) e
 	return nil
 }
 
-func (ctx *fmtCtx) fmtInputDefinition(dst io.Writer, v *model.InputDefinition) error {
+func (ctx *fmtCtx) fmtInputDefinition(dst io.Writer, v model.InputDefinition) error {
 	var buf bytes.Buffer
 
 	buf.WriteString("input ")
@@ -736,7 +736,7 @@ func (ctx *fmtCtx) fmtInputDefinition(dst io.Writer, v *model.InputDefinition) e
 	return nil
 }
 
-func (ctx *fmtCtx) fmtInputDefinitionField(dst io.Writer, v *model.InputFieldDefinition) error {
+func (ctx *fmtCtx) fmtInputDefinitionField(dst io.Writer, v model.InputFieldDefinition) error {
 	var buf bytes.Buffer
 
 	buf.WriteString(v.Name())

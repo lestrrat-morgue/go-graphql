@@ -182,14 +182,14 @@ func (v InterfaceFieldDefinitionList) Iterator() chan InterfaceFieldDefinition {
 	return ch
 }
 
-type InputFieldDefinitionList []*InputFieldDefinition
+type InputFieldDefinitionList []InputFieldDefinition
 
-func (l *InputFieldDefinitionList) Add(list ...*InputFieldDefinition) {
+func (l *InputFieldDefinitionList) Add(list ...InputFieldDefinition) {
 	*l = append(*l, list...)
 }
 
-func (v InputFieldDefinitionList) Iterator() chan *InputFieldDefinition {
-	ch := make(chan *InputFieldDefinition, len(v))
+func (v InputFieldDefinitionList) Iterator() chan InputFieldDefinition {
+	ch := make(chan InputFieldDefinition, len(v))
 	for _, e := range v {
 		ch <- e
 	}

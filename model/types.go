@@ -152,22 +152,22 @@ func (def *UnionDefinition) AddTypes(list ...Type) {
 	def.types.Add(list...)
 }
 
-func NewInputDefinition(name string) *InputDefinition {
-	return &InputDefinition{
+func NewInputDefinition(name string) InputDefinition {
+	return &inputDefinition{
 		nameComponent: nameComponent(name),
 	}
 }
 
-func NewInputFieldDefinition(name string) *InputFieldDefinition {
-	return &InputFieldDefinition{
+func NewInputFieldDefinition(name string) InputFieldDefinition {
+	return &inputFieldDefinition{
 		nameComponent: nameComponent(name),
 	}
 }
 
-func (def *InputDefinition) AddFields(list ...*InputFieldDefinition) {
+func (def *inputDefinition) AddFields(list ...InputFieldDefinition) {
 	def.fields.Add(list...)
 }
 
-func (def InputDefinition) Fields() chan *InputFieldDefinition {
+func (def inputDefinition) Fields() chan InputFieldDefinition {
 	return def.fields.Iterator()
 }

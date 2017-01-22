@@ -188,6 +188,27 @@ type interfaceFieldDefinition struct {
 	typeComponent
 }
 
+type InputDefinition interface {
+	Namer
+	Fields() chan InputFieldDefinition
+	AddFields(...InputFieldDefinition)
+}
+
+type inputDefinition struct {
+	nameComponent
+	fields InputFieldDefinitionList
+}
+
+type InputFieldDefinition interface {
+	Namer
+	Typer
+}
+
+type inputFieldDefinition struct {
+	nameComponent
+	typeComponent
+}
+
 type NamedType interface {
 	Nullable
 	Namer
@@ -304,16 +325,6 @@ type InlineFragment struct {
 type UnionDefinition struct {
 	nameComponent
 	types TypeList
-}
-
-type InputDefinition struct {
-	nameComponent
-	fields InputFieldDefinitionList
-}
-
-type InputFieldDefinition struct {
-	nameComponent
-	typeComponent
 }
 
 type Schema struct {

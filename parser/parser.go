@@ -1107,7 +1107,7 @@ func (pctx *parseCtx) parseUnionDefinition() (*model.UnionDefinition, error) {
 	return union, nil
 }
 
-func (pctx *parseCtx) parseInputDefinition() (*model.InputDefinition, error) {
+func (pctx *parseCtx) parseInputDefinition() (model.InputDefinition, error) {
 	if _, err := consumeName(pctx, inputKey); err != nil {
 		return nil, errors.Wrap(err, `input`)
 	}
@@ -1121,7 +1121,7 @@ func (pctx *parseCtx) parseInputDefinition() (*model.InputDefinition, error) {
 		return nil, errors.Wrap(err, `input`)
 	}
 
-	var fields []*model.InputFieldDefinition
+	var fields model.InputFieldDefinitionList
 	for loop := true; loop; {
 		if peekToken(pctx, BRACE_R) {
 			loop = false
@@ -1132,7 +1132,7 @@ func (pctx *parseCtx) parseInputDefinition() (*model.InputDefinition, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, `input`)
 		}
-		fields = append(fields, field)
+		fields.Add(field)
 	}
 
 	if _, err := consumeToken(pctx, BRACE_R); err != nil {
@@ -1143,7 +1143,7 @@ func (pctx *parseCtx) parseInputDefinition() (*model.InputDefinition, error) {
 	return iface, nil
 }
 
-func (pctx *parseCtx) parseInputDefinitionField() (*model.InputFieldDefinition, error) {
+func (pctx *parseCtx) parseInputDefinitionField() (model.InputFieldDefinition, error) {
 	name, err := consumeName(pctx)
 	if err != nil {
 		return nil, errors.Wrap(err, `input field`)
