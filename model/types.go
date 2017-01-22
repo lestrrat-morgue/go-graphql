@@ -1,22 +1,22 @@
 package model
 
-func NewSchema() *Schema {
-	return &Schema{}
+func NewSchema() Schema {
+	return &schema{}
 }
 
-func (s Schema) Query() ObjectDefinition {
+func (s schema) Query() ObjectDefinition {
 	return s.query
 }
 
-func (s Schema) Types() chan ObjectDefinition {
+func (s schema) Types() chan ObjectDefinition {
 	return s.types.Iterator()
 }
 
-func (s *Schema) SetQuery(q ObjectDefinition) {
+func (s *schema) SetQuery(q ObjectDefinition) {
 	s.query = q
 }
 
-func (s *Schema) AddTypes(list ...ObjectDefinition) {
+func (s *schema) AddTypes(list ...ObjectDefinition) {
 	s.types.Add(list...)
 }
 
@@ -139,16 +139,16 @@ func (f *interfaceFieldDefinition) Type() Type {
 	return f.typ
 }
 
-func NewUnionDefinition(name string) *UnionDefinition {
-	return &UnionDefinition{
+func NewUnionDefinition(name string) UnionDefinition {
+	return &unionDefinition{
 		nameComponent: nameComponent(name),
 	}
 }
 
-func (def UnionDefinition) Types() chan Type {
+func (def unionDefinition) Types() chan Type {
 	return def.types.Iterator()
 }
-func (def *UnionDefinition) AddTypes(list ...Type) {
+func (def *unionDefinition) AddTypes(list ...Type) {
 	def.types.Add(list...)
 }
 

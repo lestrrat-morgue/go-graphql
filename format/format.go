@@ -19,8 +19,8 @@ func GraphQL(dst io.Writer, v interface{}) error {
 	switch v.(type) {
 	case model.Document:
 		return ctx.fmtDocument(dst, v.(model.Document))
-	case *model.Schema:
-		return ctx.fmtSchema(dst, v.(*model.Schema))
+	case model.Schema:
+		return ctx.fmtSchema(dst, v.(model.Schema))
 	default:
 		return errors.Errorf(`unknown grahql type: %T`, v)
 	}
@@ -46,7 +46,7 @@ func (ctx *fmtCtx) leave() {
 	}
 }
 
-func (ctx *fmtCtx) fmtSchema(dst io.Writer, v *model.Schema) error {
+func (ctx *fmtCtx) fmtSchema(dst io.Writer, v model.Schema) error {
 	var buf bytes.Buffer
 
 	if ch := v.Types(); len(ch) > 0 {
@@ -125,8 +125,8 @@ func (ctx *fmtCtx) fmtDocument(dst io.Writer, v model.Document) error {
 			if err := ctx.fmtEnumDefinition(&buf, def.(model.EnumDefinition)); err != nil {
 				return errors.Wrap(err, `failed to format enum definition`)
 			}
-		case *model.UnionDefinition:
-			if err := ctx.fmtUnionDefinition(&buf, def.(*model.UnionDefinition)); err != nil {
+		case model.UnionDefinition:
+			if err := ctx.fmtUnionDefinition(&buf, def.(model.UnionDefinition)); err != nil {
 				return errors.Wrap(err, `failed to format union definition`)
 			}
 		case model.InputDefinition:
@@ -682,7 +682,7 @@ func (ctx *fmtCtx) fmtInterfaceFieldDefinition(dst io.Writer, v model.InterfaceF
 	return nil
 }
 
-func (ctx *fmtCtx) fmtUnionDefinition(dst io.Writer, v *model.UnionDefinition) error {
+func (ctx *fmtCtx) fmtUnionDefinition(dst io.Writer, v model.UnionDefinition) error {
 	var buf bytes.Buffer
 
 	buf.WriteString("union ")

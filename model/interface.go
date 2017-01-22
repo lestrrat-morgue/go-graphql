@@ -353,12 +353,25 @@ type inlineFragment struct {
 	typ        NamedType
 }
 
-type UnionDefinition struct {
+type UnionDefinition interface {
+	Namer
+	Types() chan Type
+	AddTypes(...Type)
+}
+
+type unionDefinition struct {
 	nameComponent
 	types TypeList
 }
 
-type Schema struct {
+type Schema interface {
+	Query() ObjectDefinition
+	SetQuery(ObjectDefinition)
+	Types() chan ObjectDefinition
+	AddTypes(...ObjectDefinition)
+}
+
+type schema struct {
 	query ObjectDefinition // But must be a query
 	types ObjectDefinitionList
 }

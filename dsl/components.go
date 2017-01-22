@@ -2,7 +2,7 @@ package dsl
 
 import "github.com/lestrrat/go-graphql/model"
 
-func Schema(attrs ...model.Definition) *model.Schema {
+func Schema(attrs ...model.Definition) model.Schema {
 	var query model.ObjectDefinition
 	var types model.ObjectDefinitionList
 	for _, attr := range attrs {

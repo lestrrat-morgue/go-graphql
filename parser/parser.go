@@ -1065,7 +1065,7 @@ func (pctx *parseCtx) parseInterfaceDefinitionField() (model.InterfaceFieldDefin
 	return model.NewInterfaceFieldDefinition(name, typ), nil
 }
 
-func (pctx *parseCtx) parseUnionDefinition() (*model.UnionDefinition, error) {
+func (pctx *parseCtx) parseUnionDefinition() (model.UnionDefinition, error) {
 	if _, err := consumeName(pctx, unionKey); err != nil {
 		return nil, errors.Wrap(err, `union`)
 	}
@@ -1086,7 +1086,7 @@ func (pctx *parseCtx) parseUnionDefinition() (*model.UnionDefinition, error) {
 		return nil, errors.Wrap(err, `union`)
 	}
 
-	var types []model.Type
+	var types model.TypeList
 	types = append(types, typ)
 
 	for loop := true; loop; {
@@ -1100,7 +1100,7 @@ func (pctx *parseCtx) parseUnionDefinition() (*model.UnionDefinition, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, `union`)
 		}
-		types = append(types, typ)
+		types.Add(typ)
 	}
 	union.AddTypes(types...)
 
