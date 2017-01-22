@@ -263,20 +263,20 @@ func (ctx *fmtCtx) fmtSelection(dst io.Writer, v model.Selection) error {
 	switch v.(type) {
 	case model.SelectionField:
 		return ctx.fmtField(dst, v.(model.SelectionField))
-	case *model.FragmentSpread:
-		return ctx.fmtFragmentSpread(dst, v.(*model.FragmentSpread))
-	case *model.InlineFragment:
-		return ctx.fmtInlineFragment(dst, v.(*model.InlineFragment))
+	case model.FragmentSpread:
+		return ctx.fmtFragmentSpread(dst, v.(model.FragmentSpread))
+	case model.InlineFragment:
+		return ctx.fmtInlineFragment(dst, v.(model.InlineFragment))
 	default:
 		return errors.New(`unknown selection`)
 	}
 }
 
-func (ctx *fmtCtx) fmtInlineFragment(dst io.Writer, v *model.InlineFragment) error {
+func (ctx *fmtCtx) fmtInlineFragment(dst io.Writer, v model.InlineFragment) error {
 	var buf bytes.Buffer
 	buf.WriteString("... ")
 
-	if typ := v.Type(); typ != nil {
+	if typ := v.TypeCondition(); typ != nil {
 		if err := ctx.fmtTypeCondition(&buf, typ); err != nil {
 			return errors.Wrap(err, `failed to format type condition`)
 		}
@@ -291,7 +291,7 @@ func (ctx *fmtCtx) fmtInlineFragment(dst io.Writer, v *model.InlineFragment) err
 	}
 
 	buf.WriteByte(' ')
-	if err := ctx.fmtSelectionSet(&buf, v.SelectionSet()); err != nil {
+	if err := ctx.fmtSelectionSet(&buf, v.Selections()); err != nil {
 		return errors.Wrap(err, `failed to format selection set`)
 	}
 
@@ -362,7 +362,7 @@ func (ctx *fmtCtx) fmtField(dst io.Writer, v model.SelectionField) error {
 	return nil
 }
 
-func (ctx *fmtCtx) fmtFragmentSpread(dst io.Writer, v *model.FragmentSpread) error {
+func (ctx *fmtCtx) fmtFragmentSpread(dst io.Writer, v model.FragmentSpread) error {
 	var buf bytes.Buffer
 	buf.WriteString("...")
 	buf.WriteString(v.Name())

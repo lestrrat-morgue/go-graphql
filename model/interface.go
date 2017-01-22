@@ -26,6 +26,16 @@ type Nullable interface {
 	SetNullable(bool)
 }
 
+type DirectivesContainer interface {
+	Directives() chan Directive
+	AddDirectives(...Directive)
+}
+
+type SelectionsContainer interface{
+	Selections() chan Selection
+	AddSelections(...Selection)
+}
+
 type Type interface {}
 
 type Definition interface{
@@ -48,16 +58,15 @@ const (
 )
 
 type OperationDefinition interface {
+	Namer
+	DirectivesContainer
+	SelectionsContainer
+
 	OperationType() OperationType
 	HasName() bool
-	Name() string
 	SetName(string)
 	Variables() chan VariableDefinition
-	Directives() chan Directive
-	Selections() chan Selection
 	AddVariableDefinitions(...VariableDefinition)
-	AddDirectives(...Directive)
-	AddSelections(...Selection)
 }
 
 type operationDefinition struct {
@@ -72,11 +81,8 @@ type operationDefinition struct {
 type FragmentDefinition interface {
 	Namer
 	Typer
-
-	Directives() chan Directive
-	Selections() chan Selection
-	AddDirectives(...Directive)
-	AddSelections(...Selection)
+	DirectivesContainer
+	SelectionsContainer
 }
 
 type fragmentDefinition struct {
@@ -304,15 +310,14 @@ type directive struct {
 
 type SelectionField interface {
 	Namer
+	DirectivesContainer
+	SelectionsContainer
+
 	HasAlias() bool
 	Alias() string
 	SetAlias(string)
 	Arguments() chan Argument
-	Directives() chan Directive
-	Selections() chan Selection
 	AddArguments(...Argument)
-	AddDirectives(...Directive)
-	AddSelections(...Selection)
 }
 
 type selectionField struct {
@@ -324,12 +329,25 @@ type selectionField struct {
 	selections SelectionList
 }
 
-type FragmentSpread struct {
+type FragmentSpread interface {
+	Namer
+	DirectivesContainer
+}
+
+type fragmentSpread struct {
 	nameComponent
 	directives DirectiveList
 }
 
-type InlineFragment struct {
+type InlineFragment interface {
+	DirectivesContainer
+	SelectionsContainer
+
+	SetTypeCondition(NamedType)
+	TypeCondition() NamedType
+}
+	
+type inlineFragment struct {
 	directives DirectiveList
 	selections SelectionList
 	typ        NamedType

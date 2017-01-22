@@ -741,7 +741,7 @@ func (pctx *parseCtx) parseArguments() (model.ArgumentList, error) {
 
 // FragmentSpread:
 //   ... FragmentName Directives?
-func (pctx *parseCtx) parseFragmentSpread() (*model.FragmentSpread, error) {
+func (pctx *parseCtx) parseFragmentSpread() (model.FragmentSpread, error) {
 	// Assumes ... has already been consumed
 	name, err := pctx.parseFragmentName()
 	if err != nil {
@@ -763,7 +763,7 @@ func (pctx *parseCtx) parseFragmentSpread() (*model.FragmentSpread, error) {
 
 // InlineFragment
 //   ...TypeCondition? tDirectives? SelectionSet
-func (pctx *parseCtx) parseInlineFragment() (*model.InlineFragment, error) {
+func (pctx *parseCtx) parseInlineFragment() (model.InlineFragment, error) {
 	// Assumes ... has already been consumed
 	var typ model.NamedType
 	if peekName(pctx, onKey) {

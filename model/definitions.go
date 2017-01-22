@@ -1,30 +1,30 @@
 package model
 
-func NewInlineFragment() *InlineFragment {
-	return &InlineFragment{}
+func NewInlineFragment() InlineFragment {
+	return &inlineFragment{}
 }
 
-func (f *InlineFragment) AddSelections(list ...Selection) {
+func (f *inlineFragment) AddSelections(list ...Selection) {
 	f.selections.Add(list...)
 }
 
-func (f *InlineFragment) AddDirectives(list ...Directive) {
+func (f *inlineFragment) AddDirectives(list ...Directive) {
 	f.directives.Add(list...)
 }
 
-func (f *InlineFragment) SetTypeCondition(typ NamedType) {
+func (f *inlineFragment) SetTypeCondition(typ NamedType) {
 	f.typ = typ
 }
 
-func (f InlineFragment) Type() NamedType {
+func (f inlineFragment) TypeCondition() NamedType {
 	return f.typ
 }
 
-func (f InlineFragment) SelectionSet() chan Selection {
+func (f inlineFragment) Selections() chan Selection {
 	return f.selections.Iterator()
 }
 
-func (f InlineFragment) Directives() chan Directive {
+func (f inlineFragment) Directives() chan Directive {
 	return f.directives.Iterator()
 }
 

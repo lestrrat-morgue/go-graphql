@@ -43,12 +43,16 @@ func (f *selectionField) AddSelections(selections ...Selection) {
 	f.selections.Add(selections...)
 }
 
-func NewFragmentSpread(name string) *FragmentSpread {
-	return &FragmentSpread{
+func NewFragmentSpread(name string) FragmentSpread {
+	return &fragmentSpread{
 		nameComponent: nameComponent(name),
 	}
 }
 
-func (f *FragmentSpread) AddDirectives(directives ...Directive) {
+func (f fragmentSpread) Directives() chan Directive {
+	return f.directives.Iterator()
+}
+
+func (f *fragmentSpread) AddDirectives(directives ...Directive) {
 	f.directives.Add(directives...)
 }
