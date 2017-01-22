@@ -34,9 +34,10 @@ We have a DSL to build the schema. See this file [dsl_test.go](./dsl/dsl_test.go
 ## BENCHMARK
 
 ```
-% go test -tags bench -benchmem -bench .
-BenchmarkParseOfficial-4       10000        100539 ns/op       41000 B/op       1147 allocs/op
-BenchmarkParseLestrrat-4       20000         73134 ns/op       15453 B/op        583 allocs/op
+% make bench
+go test -tags bench -benchmem -bench .
+BenchmarkParseOfficial-4       10000        102123 ns/op       41000 B/op       1147 allocs/op
+BenchmarkParseLestrrat-4       20000         77163 ns/op       16530 B/op        599 allocs/op
 PASS
-ok      github.com/lestrrat/go-graphql  3.262s
+ok      github.com/lestrrat/go-graphql  3.399s
 ```
