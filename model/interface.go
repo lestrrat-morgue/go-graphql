@@ -1,21 +1,36 @@
 package model
 
+// Namer represents all those that have a name to share
 type Namer interface {
 	Name() string
 }
 
+// Typer represents all those that can get/set a type
 type Typer interface {
 	Type() Type
 	SetType(Type)
 }
 
+// DefaultValuer represents all those that may or may not have
+// a default value associated with it
 type DefaultValuer interface {
 	HasDefaultValue() bool
 	DefaultValue() Value
 	SetDefaultValue(Value)
 }
 
-type Definition interface{}
+// Nullable represents those types that can be specified that
+// it could be null or not-null
+type Nullable interface {
+	IsNullable() bool
+	SetNullable(bool)
+}
+
+type Type interface {}
+
+type Definition interface{
+}
+
 type Document interface {
 	Definitions() chan Definition
 	AddDefinitions(...Definition)
@@ -71,12 +86,87 @@ type fragmentDefinition struct {
 	selections SelectionList
 }
 
-type Type interface {
-	IsNullable() bool
-	SetNullable(bool)
+type VariableDefinition interface {
+	Namer
+	Typer
+	DefaultValuer
+}
+
+type variableDefinition struct {
+	nameComponent
+	typeComponent
+	defaultValueComponent
+}
+
+// ObjectDefinition is a definition of a new object type
+type ObjectDefinition interface {
+	Namer
+	Type
+	Nullable
+	AddFields(...ObjectFieldDefinition)
+	Fields() chan ObjectFieldDefinition
+	HasImplements() bool
+	Implements() NamedType
+	SetImplements(NamedType)
+}
+
+type objectDefinition struct {
+	nullable
+	nameComponent
+	fields        ObjectFieldDefinitionList
+	hasImplements bool
+	implements    NamedType
+}
+
+type ObjectFieldArgumentDefinition interface {
+	Namer
+	Typer
+	DefaultValuer
+}
+
+type objectFieldArgumentDefinition struct {
+	nameComponent
+	typeComponent
+	defaultValueComponent
+}
+
+type ObjectFieldDefinition interface {
+	Namer
+	Typer
+	Arguments() chan ObjectFieldArgumentDefinition
+	AddArguments(...ObjectFieldArgumentDefinition)
+}
+
+type objectFieldDefinition struct {
+	nameComponent
+	typeComponent
+	arguments ObjectFieldArgumentDefinitionList
+}
+
+type EnumDefinition interface {
+	Namer
+	Elements() chan EnumElementDefinition
+	AddElements(...EnumElementDefinition)
+}
+
+type enumDefinition struct {
+	nullable // is this kosher?
+	nameComponent
+	elements EnumElementDefinitionList
+}
+
+type EnumElementDefinition interface {
+	Namer
+	Value() Value
+}
+	
+type enumElementDefinition struct {
+	nameComponent
+	valueComponent
 }
 
 type NamedType interface {
+	Nullable
 	Namer
 	Type
 }
@@ -90,18 +180,6 @@ type namedType struct {
 type ListType struct {
 	nullable
 	typeComponent
-}
-
-type VariableDefinition interface {
-	Namer
-	Typer
-	DefaultValuer
-}
-
-type variableDefinition struct {
-	nameComponent
-	typeComponent
-	defaultValueComponent
 }
 
 type Value interface {
@@ -152,6 +230,7 @@ type ObjectValue interface {
 	Fields() chan ObjectField
 	AddFields(...ObjectField)
 }
+
 type objectValue struct {
 	fields ObjectFieldList
 }
@@ -197,61 +276,6 @@ type InlineFragment struct {
 	directives DirectiveList
 	selections SelectionList
 	typ        NamedType
-}
-
-// ObjectDefinition is a definition of a new object type
-type ObjectDefinition interface {
-	Namer
-	Type
-	AddFields(...ObjectFieldDefinition)
-	Fields() chan ObjectFieldDefinition
-	HasImplements() bool
-	Implements() NamedType
-	SetImplements(NamedType)
-}
-
-type objectDefinition struct {
-	nullable
-	nameComponent
-	fields        ObjectFieldDefinitionList
-	hasImplements bool
-	implements    NamedType
-}
-
-type ObjectFieldArgumentDefinition interface {
-	Namer
-	Typer
-	DefaultValuer
-}
-
-type objectFieldArgumentDefinition struct {
-	nameComponent
-	typeComponent
-	defaultValueComponent
-}
-
-type ObjectFieldDefinition interface {
-	Namer
-	Typer
-	Arguments() chan ObjectFieldArgumentDefinition
-	AddArguments(...ObjectFieldArgumentDefinition)
-}
-
-type objectFieldDefinition struct {
-	nameComponent
-	typeComponent
-	arguments ObjectFieldArgumentDefinitionList
-}
-
-type EnumDefinition struct {
-	nullable // is this kosher?
-	nameComponent
-	elements EnumElementDefinitionList
-}
-
-type EnumElementDefinition struct {
-	nameComponent
-	valueComponent
 }
 
 type InterfaceDefinition struct {

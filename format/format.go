@@ -121,8 +121,8 @@ func (ctx *fmtCtx) fmtDocument(dst io.Writer, v model.Document) error {
 			if err := ctx.fmtInterfaceDefinition(&buf, def.(*model.InterfaceDefinition)); err != nil {
 				return errors.Wrap(err, `failed to format object type definition`)
 			}
-		case *model.EnumDefinition:
-			if err := ctx.fmtEnumDefinition(&buf, def.(*model.EnumDefinition)); err != nil {
+		case model.EnumDefinition:
+			if err := ctx.fmtEnumDefinition(&buf, def.(model.EnumDefinition)); err != nil {
 				return errors.Wrap(err, `failed to format enum definition`)
 			}
 		case *model.UnionDefinition:
@@ -608,7 +608,7 @@ func (ctx *fmtCtx) fmtObjectFieldArgumentDefinitionList(dst io.Writer, argch cha
 	return nil
 }
 
-func (ctx *fmtCtx) fmtEnumDefinition(dst io.Writer, v *model.EnumDefinition) error {
+func (ctx *fmtCtx) fmtEnumDefinition(dst io.Writer, v model.EnumDefinition) error {
 	var buf bytes.Buffer
 	buf.WriteString("enum ")
 	buf.WriteString(v.Name())
@@ -628,7 +628,7 @@ func (ctx *fmtCtx) fmtEnumDefinition(dst io.Writer, v *model.EnumDefinition) err
 
 }
 
-func (ctx *fmtCtx) fmtEnumElementDefinitionList(dst io.Writer, ech chan *model.EnumElementDefinition) error {
+func (ctx *fmtCtx) fmtEnumElementDefinitionList(dst io.Writer, ech chan model.EnumElementDefinition) error {
 	var buf bytes.Buffer
 	for e := range ech {
 		buf.WriteByte('\n')

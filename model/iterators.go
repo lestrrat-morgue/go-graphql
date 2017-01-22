@@ -152,14 +152,14 @@ func (v ObjectFieldDefinitionList) Iterator() chan ObjectFieldDefinition {
 	return ch
 }
 
-type EnumElementDefinitionList []*EnumElementDefinition
+type EnumElementDefinitionList []EnumElementDefinition
 
-func (l *EnumElementDefinitionList) Add(list ...*EnumElementDefinition) {
+func (l *EnumElementDefinitionList) Add(list ...EnumElementDefinition) {
 	*l = append(*l, list...)
 }
 
-func (v EnumElementDefinitionList) Iterator() chan *EnumElementDefinition {
-	ch := make(chan *EnumElementDefinition, len(v))
+func (v EnumElementDefinitionList) Iterator() chan EnumElementDefinition {
+	ch := make(chan EnumElementDefinition, len(v))
 	for _, e := range v {
 		ch <- e
 	}

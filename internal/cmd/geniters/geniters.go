@@ -32,7 +32,7 @@ func _main() error {
 		{Name: "ObjectDefinition", Interface: true},
 		{Name: "ObjectField", Interface: true},
 		{Name: "ObjectFieldDefinition", Interface: true},
-		{Name: "EnumElementDefinition"},
+		{Name: "EnumElementDefinition", Interface: true},
 		{Name: "InterfaceFieldDefinition"},
 		{Name: "InputFieldDefinition"},
 		{Name: "ObjectFieldArgumentDefinition", Interface: true},

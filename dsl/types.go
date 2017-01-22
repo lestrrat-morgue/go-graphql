@@ -3,7 +3,9 @@ package dsl
 import "github.com/lestrrat/go-graphql/model"
 
 func NotNull(v model.Type) model.Type {
-	v.SetNullable(false)
+	if n, ok := v.(model.Nullable); ok {
+		n.SetNullable(false)
+	}
 	return v
 }
 

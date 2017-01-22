@@ -84,23 +84,23 @@ func (t objectFieldDefinition) Arguments() chan ObjectFieldArgumentDefinition {
 	return t.arguments.Iterator()
 }
 
-func NewEnumDefinition(name string) *EnumDefinition {
-	return &EnumDefinition{
+func NewEnumDefinition(name string) EnumDefinition {
+	return &enumDefinition{
 		nameComponent: nameComponent(name),
 		nullable:      nullable(true),
 	}
 }
 
-func (t *EnumDefinition) AddElements(list ...*EnumElementDefinition) {
+func (t *enumDefinition) AddElements(list ...EnumElementDefinition) {
 	t.elements.Add(list...)
 }
 
-func (t *EnumDefinition) Elements() chan *EnumElementDefinition {
+func (t *enumDefinition) Elements() chan EnumElementDefinition {
 	return t.elements.Iterator()
 }
 
-func NewEnumElementDefinition(name string, value Value) *EnumElementDefinition {
-	return &EnumElementDefinition{
+func NewEnumElementDefinition(name string, value Value) EnumElementDefinition {
+	return &enumElementDefinition{
 		nameComponent:  nameComponent(name),
 		valueComponent: valueComponent{value: value},
 	}

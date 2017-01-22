@@ -467,7 +467,11 @@ func (pctx *parseCtx) parseType() (model.Type, error) {
 
 	if peekToken(pctx, BANG) {
 		pctx.advance()
-		typ.SetNullable(false)
+		if nt, ok := typ.(model.Nullable); ok {
+			nt.SetNullable(false)
+		} else {
+			return nil, errors.Errorf("attempt to set not-null on nullable-incompatible type")
+		}
 	}
 	return typ, nil
 }
@@ -968,7 +972,7 @@ func (pctx *parseCtx) parseObjectFieldArgumentDefinitions() (model.ObjectFieldAr
 	return args, nil
 }
 
-func (pctx *parseCtx) parseEnumDefinition() (*model.EnumDefinition, error) {
+func (pctx *parseCtx) parseEnumDefinition() (model.EnumDefinition, error) {
 	if _, err := consumeName(pctx, enumKey); err != nil {
 		return nil, errors.Wrap(err, `enum`)
 	}
@@ -982,7 +986,7 @@ func (pctx *parseCtx) parseEnumDefinition() (*model.EnumDefinition, error) {
 		return nil, errors.Wrap(err, `enum`)
 	}
 
-	var elements []*model.EnumElementDefinition
+	var elements model.EnumElementDefinitionList
 	var val = 1
 	for loop := true; loop; {
 		if peekToken(pctx, BRACE_R) {
@@ -994,7 +998,7 @@ func (pctx *parseCtx) parseEnumDefinition() (*model.EnumDefinition, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, `enum`)
 		}
-		elements = append(elements, model.NewEnumElementDefinition(elem, model.NewIntValue(val)))
+		elements.Add(model.NewEnumElementDefinition(elem, model.NewIntValue(val)))
 		val++
 	}
 
