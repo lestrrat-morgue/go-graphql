@@ -1,5 +1,5 @@
-//go:generate go run internal/cmd/gentokens.go -- parser/tokens.go
-//go:generate go run internal/cmd/genkinds.go -- parser/kinds.go
-//go:generate go run internal/cmd/geniters.go -- parser/iterators.go
+//go:generate go run internal/cmd/gentokens/gentokens.go
+//go:generate go run internal/cmd/genkinds/genkinds.go
+//go:generate go run internal/cmd/geniters/geniters.go
 
 package graphql
