@@ -796,7 +796,7 @@ func (pctx *parseCtx) parseInlineFragment() (*model.InlineFragment, error) {
 //   { ObjectField? }
 // ObjectField:
 //   Name : Value
-func (pctx *parseCtx) parseObjectValue() (*model.ObjectValue, error) {
+func (pctx *parseCtx) parseObjectValue() (model.ObjectValue, error) {
 	if _, err := consumeToken(pctx, BRACE_L); err != nil {
 		return nil, errors.Wrap(err, `object value`)
 	}

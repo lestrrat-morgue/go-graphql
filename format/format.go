@@ -429,10 +429,10 @@ func (ctx *fmtCtx) fmtValue(dst io.Writer, v model.Value) error {
 		buf.WriteString("null")
 	case *model.EnumValue, model.EnumValue:
 		buf.WriteString(v.Value().(string))
-	case *model.ObjectValue:
+	case model.ObjectValue:
 		buf.WriteByte('{')
 		err := ctx.enterleave(func() error {
-			for field := range v.(*model.ObjectValue).Fields() {
+			for field := range v.(model.ObjectValue).Fields() {
 				buf.WriteByte('\n')
 				buf.Write(ctx.indent())
 				buf.WriteString(field.Name())

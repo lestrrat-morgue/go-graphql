@@ -93,19 +93,19 @@ func NewObjectField(name string, value Value) ObjectField {
 	}
 }
 
-func NewObjectValue() *ObjectValue {
-	return &ObjectValue{}
+func NewObjectValue() ObjectValue {
+	return &objectValue{}
 }
 
-func (o *ObjectValue) Fields() chan ObjectField {
+func (o *objectValue) Fields() chan ObjectField {
 	return o.fields.Iterator()
 }
 
-func (o *ObjectValue) AddFields(f ...ObjectField) {
+func (o *objectValue) AddFields(f ...ObjectField) {
 	o.fields.Add(f...)
 }
 
 // This doesn't really make sense, but... hmm, revisit
-func (o ObjectValue) Value() interface{} {
+func (o objectValue) Value() interface{} {
 	return nil
 }

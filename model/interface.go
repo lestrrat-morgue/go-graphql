@@ -115,7 +115,13 @@ type objectField struct {
 	valueComponent
 }
 
-type ObjectValue struct {
+type ObjectValue interface {
+	Value
+
+	Fields() chan ObjectField
+	AddFields(...ObjectField)
+}
+type objectValue struct {
 	fields ObjectFieldList
 }
 
