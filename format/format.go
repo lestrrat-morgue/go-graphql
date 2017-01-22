@@ -413,23 +413,21 @@ func (ctx *fmtCtx) fmtVariableDefinition(dst io.Writer, v model.VariableDefiniti
 func (ctx *fmtCtx) fmtValue(dst io.Writer, v model.Value) error {
 	var buf bytes.Buffer
 
-	switch v.(type) {
-	case *model.Variable, model.Variable:
+	switch v.Kind() {
+	case model.VariableKind:
 		buf.WriteByte('$')
 		buf.WriteString(v.Value().(string))
-	case *model.IntValue, model.IntValue:
+	case model.IntKind:
 		buf.WriteString(strconv.Itoa(v.Value().(int)))
-	case *model.FloatValue, model.FloatValue:
+	case model.FloatKind:
 		buf.WriteString(strconv.FormatFloat(v.Value().(float64), 'g', -1, 64))
-	case *model.StringValue, model.StringValue:
+	case model.StringKind, model.EnumKind:
 		buf.WriteString(v.Value().(string))
-	case *model.BoolValue, model.BoolValue:
+	case model.BooleanKind:
 		buf.WriteString(strconv.FormatBool(v.Value().(bool)))
-	case *model.NullValue, model.NullValue:
+	case model.NullKind:
 		buf.WriteString("null")
-	case *model.EnumValue, model.EnumValue:
-		buf.WriteString(v.Value().(string))
-	case model.ObjectValue:
+	case model.ObjectKind:
 		buf.WriteByte('{')
 		err := ctx.enterleave(func() error {
 			for field := range v.(model.ObjectValue).Fields() {

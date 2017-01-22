@@ -26,6 +26,8 @@ func _main() error {
 		"Enum",
 		"List",
 		"Object",
+		"Variable",
+		"Null",
 	}
 
 	if err := genKinds(kinds, "model/kinds.go"); err != nil {

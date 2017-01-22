@@ -237,32 +237,38 @@ type listType struct {
 }
 
 type Value interface {
+	Kind() Kind
 	Value() interface{}
 }
 
-type Variable struct {
+type Variable interface {
+	Namer
+	Value
+}
+
+type variable struct {
 	nameComponent
 }
 
-type IntValue struct {
+type intValue struct {
 	value int
 }
 
-type FloatValue struct {
+type floatValue struct {
 	value float64
 }
 
-type StringValue struct {
+type stringValue struct {
 	value string
 }
 
-type BoolValue struct {
+type boolValue struct {
 	value bool
 }
 
-type NullValue struct{}
+type nullValue struct{}
 
-type EnumValue struct {
+type enumValue struct {
 	nameComponent
 }
 

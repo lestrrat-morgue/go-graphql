@@ -553,7 +553,7 @@ func (pctx *parseCtx) parseValue() (model.Value, error) {
 		case trueKey, falseKey:
 			return model.NewBoolValue(name)
 		case nullKey:
-			return model.NullValue{}, nil
+			return model.NullValue(), nil
 		default:
 			return model.NewEnumValue(name), nil
 		}

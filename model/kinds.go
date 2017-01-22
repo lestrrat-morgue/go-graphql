@@ -20,6 +20,8 @@ const (
 	EnumKind
 	ListKind
 	ObjectKind
+	VariableKind
+	NullKind
 )
 
 func (k Kind) MarshalJSON() ([]byte, error) {
@@ -53,6 +55,12 @@ func (k *Kind) UnmarshalJSON(b []byte) error {
 	case "Object":
 		*k = ObjectKind
 		return nil
+	case "Variable":
+		*k = VariableKind
+		return nil
+	case "Null":
+		*k = NullKind
+		return nil
 	}
 	return errors.Errorf("invalid kind in unmarshal: %s", s)
 }
@@ -73,6 +81,10 @@ func (k Kind) String() string {
 		return "List"
 	case ObjectKind:
 		return "Object"
+	case VariableKind:
+		return "Variable"
+	case NullKind:
+		return "Null"
 	}
 	return "Invalid"
 }

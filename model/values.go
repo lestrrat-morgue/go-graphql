@@ -6,17 +6,21 @@ import (
 	"github.com/pkg/errors"
 )
 
-func NewVariable(s string) *Variable {
-	return &Variable{
+func NewVariable(s string) Variable {
+	return &variable{
 		nameComponent: nameComponent(s),
 	}
 }
 
-func (v Variable) Value() interface{} {
+func (v variable) Kind() Kind {
+	return VariableKind
+}
+
+func (v variable) Value() interface{} {
 	return v.Name()
 }
 
-func ParseIntValue(s string) (*IntValue, error) {
+func ParseIntValue(s string) (Value, error) {
 	v, err := strconv.ParseInt(s, 10, 64)
 	if err != nil {
 		return nil, errors.Wrap(err, `failed to parse int`)
@@ -24,66 +28,95 @@ func ParseIntValue(s string) (*IntValue, error) {
 	return NewIntValue(int(v)), nil
 }
 
-func NewIntValue(v int) *IntValue {
-	return &IntValue{
+func NewIntValue(v int) Value {
+	return &intValue{
 		value: v,
 	}
 }
 
-func (v IntValue) Value() interface{} {
+func (v intValue) Value() interface{} {
 	return v.value
 }
 
-func NewFloatValue(s string) (*FloatValue, error) {
+func (v intValue) Kind() Kind {
+	return IntKind
+}
+
+func NewFloatValue(s string) (Value, error) {
 	v, err := strconv.ParseFloat(s, 64)
 	if err != nil {
 		return nil, errors.Wrap(err, `failed to parse float`)
 	}
-	return &FloatValue{
+	return &floatValue{
 		value: v,
 	}, nil
 }
 
-func (v FloatValue) Value() interface{} {
+func (v floatValue) Kind() Kind {
+	return FloatKind
+}
+
+func (v floatValue) Value() interface{} {
 	return v.value
 }
 
-func NewStringValue(s string) *StringValue {
-	return &StringValue{
+func NewStringValue(s string) Value {
+	return &stringValue{
 		value: s,
 	}
 }
 
-func (v StringValue) Value() interface{} {
+func (v stringValue) Kind() Kind {
+	return StringKind
+}
+
+func (v stringValue) Value() interface{} {
 	return v.value
 }
 
-func NewBoolValue(s string) (*BoolValue, error) {
+func NewBoolValue(s string) (Value, error) {
 	v, err := strconv.ParseBool(s)
 	if err != nil {
 		return nil, errors.Wrap(err, `failed to parse bool`)
 	}
-	return &BoolValue{
+	return &boolValue{
 		value: v,
 	}, nil
 }
 
-func (v BoolValue) Value() interface{} {
+func (v boolValue) Value() interface{} {
 	return v.value
 }
 
-func (v NullValue) Value() interface{} {
+func (v boolValue) Kind() Kind {
+	return BooleanKind
+}
+
+var nullv nullValue
+func NullValue() Value {
+	return &nullv
+}
+
+func (v nullValue) Value() interface{} {
 	return nil
 }
 
-func NewEnumValue(s string) *EnumValue {
-	return &EnumValue{
+func (v nullValue) Kind() Kind {
+	return NullKind
+}
+
+func NewEnumValue(s string) Value {
+	return &enumValue{
 		nameComponent: nameComponent(s),
 	}
 }
 
-func (v EnumValue) Value() interface{} {
+func (v enumValue) Value() interface{} {
 	return v.Name()
+}
+
+func (v enumValue) Kind() Kind {
+	return EnumKind
 }
 
 func NewObjectField(name string, value Value) ObjectField {
@@ -95,6 +128,10 @@ func NewObjectField(name string, value Value) ObjectField {
 
 func NewObjectValue() ObjectValue {
 	return &objectValue{}
+}
+
+func (o objectValue) Kind() Kind {
+	return ObjectKind
 }
 
 func (o *objectValue) Fields() chan ObjectField {
