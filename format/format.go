@@ -51,7 +51,7 @@ func (ctx *fmtCtx) fmtSchema(dst io.Writer, v model.Schema) error {
 
 	if ch := v.Types(); len(ch) > 0 {
 		for typ := range ch {
-			if err := ctx.fmtObjectDefinition(&buf, typ); err != nil {
+			if err := ctx.fmtDefinition(&buf, typ); err != nil {
 				return errors.Wrap(err, `failed to format type`)
 			}
 			buf.WriteString("\n\n")
@@ -77,10 +77,10 @@ func (ctx *fmtCtx) fmtSchema(dst io.Writer, v model.Schema) error {
 			buf.Write(ctx.indent())
 			buf.WriteString("types: [")
 			l := len(ch)
-			i := 0;
+			i := 0
 			for typ := range ch {
 				buf.WriteString(typ.Name())
-				if l - 1 > i {
+				if l-1 > i {
 					buf.WriteString(", ")
 				}
 				i++
@@ -96,7 +96,7 @@ func (ctx *fmtCtx) fmtSchema(dst io.Writer, v model.Schema) error {
 	}
 	return nil
 }
-	
+
 func (ctx *fmtCtx) fmtDocument(dst io.Writer, v model.Document) error {
 	var buf bytes.Buffer
 	for def := range v.Definitions() {
@@ -104,36 +104,50 @@ func (ctx *fmtCtx) fmtDocument(dst io.Writer, v model.Document) error {
 			buf.WriteString("\n\n")
 		}
 
-		switch def.(type) {
-		case model.OperationDefinition:
-			if err := ctx.fmtOperationDefinition(&buf, def.(model.OperationDefinition)); err != nil {
-				return errors.Wrap(err, `failed to format operation definition`)
-			}
-		case model.FragmentDefinition:
-			if err := ctx.fmtFragmentDefinition(&buf, def.(model.FragmentDefinition)); err != nil {
-				return errors.Wrap(err, `failed to format fragment definition`)
-			}
-		case model.ObjectDefinition:
-			if err := ctx.fmtObjectDefinition(&buf, def.(model.ObjectDefinition)); err != nil {
-				return errors.Wrap(err, `failed to format object type definition`)
-			}
-		case model.InterfaceDefinition:
-			if err := ctx.fmtInterfaceDefinition(&buf, def.(model.InterfaceDefinition)); err != nil {
-				return errors.Wrap(err, `failed to format object type definition`)
-			}
-		case model.EnumDefinition:
-			if err := ctx.fmtEnumDefinition(&buf, def.(model.EnumDefinition)); err != nil {
-				return errors.Wrap(err, `failed to format enum definition`)
-			}
-		case model.UnionDefinition:
-			if err := ctx.fmtUnionDefinition(&buf, def.(model.UnionDefinition)); err != nil {
-				return errors.Wrap(err, `failed to format union definition`)
-			}
-		case model.InputDefinition:
-			if err := ctx.fmtInputDefinition(&buf, def.(model.InputDefinition)); err != nil {
-				return errors.Wrap(err, `failed to format input definition`)
-			}
+		if err := ctx.fmtDefinition(dst, def); err != nil {
+			return errors.Wrap(err, `failed to format definition`)
 		}
+	}
+	if _, err := buf.WriteTo(dst); err != nil {
+		return errors.Wrap(err, `failed to write to destination`)
+	}
+	return nil
+}
+
+func (ctx *fmtCtx) fmtDefinition(dst io.Writer, def model.Definition) error {
+	var buf bytes.Buffer
+
+	switch def.(type) {
+	case model.OperationDefinition:
+		if err := ctx.fmtOperationDefinition(&buf, def.(model.OperationDefinition)); err != nil {
+			return errors.Wrap(err, `failed to format operation definition`)
+		}
+	case model.FragmentDefinition:
+		if err := ctx.fmtFragmentDefinition(&buf, def.(model.FragmentDefinition)); err != nil {
+			return errors.Wrap(err, `failed to format fragment definition`)
+		}
+	case model.ObjectDefinition:
+		if err := ctx.fmtObjectDefinition(&buf, def.(model.ObjectDefinition)); err != nil {
+			return errors.Wrap(err, `failed to format object type definition`)
+		}
+	case model.InterfaceDefinition:
+		if err := ctx.fmtInterfaceDefinition(&buf, def.(model.InterfaceDefinition)); err != nil {
+			return errors.Wrap(err, `failed to format object type definition`)
+		}
+	case model.EnumDefinition:
+		if err := ctx.fmtEnumDefinition(&buf, def.(model.EnumDefinition)); err != nil {
+			return errors.Wrap(err, `failed to format enum definition`)
+		}
+	case model.UnionDefinition:
+		if err := ctx.fmtUnionDefinition(&buf, def.(model.UnionDefinition)); err != nil {
+			return errors.Wrap(err, `failed to format union definition`)
+		}
+	case model.InputDefinition:
+		if err := ctx.fmtInputDefinition(&buf, def.(model.InputDefinition)); err != nil {
+			return errors.Wrap(err, `failed to format input definition`)
+		}
+	default:
+		return errors.Errorf(`unknown definition %T`, def)
 	}
 
 	if _, err := buf.WriteTo(dst); err != nil {
@@ -748,5 +762,3 @@ func (ctx *fmtCtx) fmtInputDefinitionField(dst io.Writer, v model.InputFieldDefi
 	}
 	return nil
 }
-
-

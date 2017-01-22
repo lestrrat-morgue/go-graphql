@@ -8,7 +8,7 @@ func (s schema) Query() ObjectDefinition {
 	return s.query
 }
 
-func (s schema) Types() chan ObjectDefinition {
+func (s schema) Types() chan Definition {
 	return s.types.Iterator()
 }
 
@@ -16,7 +16,7 @@ func (s *schema) SetQuery(q ObjectDefinition) {
 	s.query = q
 }
 
-func (s *schema) AddTypes(list ...ObjectDefinition) {
+func (s *schema) AddTypes(list ...Definition) {
 	s.types.Add(list...)
 }
 

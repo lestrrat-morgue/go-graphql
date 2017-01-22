@@ -4,14 +4,14 @@ import "github.com/lestrrat/go-graphql/model"
 
 func Schema(attrs ...model.Definition) model.Schema {
 	var query model.ObjectDefinition
-	var types model.ObjectDefinitionList
+	var types model.DefinitionList
 	for _, attr := range attrs {
 		if q, ok := attr.(model.ObjectDefinition); ok && q.Name() == `Query` {
 			query = q
 		} else {
 			switch attr.(type) {
-			case model.ObjectDefinition:
-				types.Add(attr.(model.ObjectDefinition))
+			case model.ObjectDefinition, model.FragmentDefinition, model.EnumDefinition, model.InterfaceDefinition, model.UnionDefinition, model.InputDefinition:
+				types.Add(attr.(model.Definition))
 			}
 		}
 	}

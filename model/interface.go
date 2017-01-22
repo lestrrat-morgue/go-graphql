@@ -39,6 +39,7 @@ type SelectionsContainer interface{
 type Type interface {}
 
 type Definition interface{
+	Namer
 }
 
 type Document interface {
@@ -377,11 +378,11 @@ type unionDefinition struct {
 type Schema interface {
 	Query() ObjectDefinition
 	SetQuery(ObjectDefinition)
-	Types() chan ObjectDefinition
-	AddTypes(...ObjectDefinition)
+	Types() chan Definition
+	AddTypes(...Definition)
 }
 
 type schema struct {
 	query ObjectDefinition // But must be a query
-	types ObjectDefinitionList
+	types DefinitionList
 }
