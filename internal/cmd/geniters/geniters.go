@@ -28,7 +28,7 @@ func _main() error {
 		{Name: "NamedType", Interface: true},
 		{Name: "Selection", Interface: true},
 		{Name: "Type", Interface: true},
-		{Name: "VariableDefinition"},
+		{Name: "VariableDefinition", Interface: true},
 		{Name: "ObjectDefinition", Interface: true},
 		{Name: "ObjectField", Interface: true},
 		{Name: "ObjectFieldDefinition", Interface: true},

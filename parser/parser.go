@@ -401,7 +401,7 @@ func (pctx *parseCtx) parseVariableDefinitions() (model.VariableDefinitionList, 
 //    Variable : Type DefaultValue?
 // DefaultValue:
 //    = Value
-func (pctx *parseCtx) parseVariableDefinition() (*model.VariableDefinition, error) {
+func (pctx *parseCtx) parseVariableDefinition() (model.VariableDefinition, error) {
 	if _, err := consumeToken(pctx, DOLLAR); err != nil {
 		return nil, errors.Wrap(err, `variable`)
 	}

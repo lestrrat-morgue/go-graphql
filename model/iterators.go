@@ -92,14 +92,14 @@ func (v TypeList) Iterator() chan Type {
 	return ch
 }
 
-type VariableDefinitionList []*VariableDefinition
+type VariableDefinitionList []VariableDefinition
 
-func (l *VariableDefinitionList) Add(list ...*VariableDefinition) {
+func (l *VariableDefinitionList) Add(list ...VariableDefinition) {
 	*l = append(*l, list...)
 }
 
-func (v VariableDefinitionList) Iterator() chan *VariableDefinition {
-	ch := make(chan *VariableDefinition, len(v))
+func (v VariableDefinitionList) Iterator() chan VariableDefinition {
+	ch := make(chan VariableDefinition, len(v))
 	for _, e := range v {
 		ch <- e
 	}

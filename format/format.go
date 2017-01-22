@@ -180,7 +180,7 @@ func (ctx *fmtCtx) fmtTypeCondition(dst io.Writer, typ model.NamedType) error {
 	return nil
 }
 
-func (ctx *fmtCtx) fmtVariableDefinitionList(dst io.Writer, vdefch chan *model.VariableDefinition) error {
+func (ctx *fmtCtx) fmtVariableDefinitionList(dst io.Writer, vdefch chan model.VariableDefinition) error {
 	l := len(vdefch)
 	if l == 0 {
 		return nil
@@ -388,7 +388,7 @@ func (ctx *fmtCtx) fmtArgument(dst io.Writer, v *model.Argument) error {
 	return nil
 }
 
-func (ctx *fmtCtx) fmtVariableDefinition(dst io.Writer, v *model.VariableDefinition) error {
+func (ctx *fmtCtx) fmtVariableDefinition(dst io.Writer, v model.VariableDefinition) error {
 	var buf bytes.Buffer
 	buf.WriteByte('$')
 	buf.WriteString(v.Name())

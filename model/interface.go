@@ -22,10 +22,10 @@ type OperationDefinition interface {
 	HasName() bool
 	Name() string
 	SetName(string)
-	Variables() chan *VariableDefinition
+	Variables() chan VariableDefinition
 	Directives() chan *Directive
 	Selections() chan Selection
-	AddVariableDefinitions(...*VariableDefinition)
+	AddVariableDefinitions(...VariableDefinition)
 	AddDirectives(...*Directive)
 	AddSelections(...Selection)
 }
@@ -67,7 +67,16 @@ type ListType struct {
 	typeComponent
 }
 
-type VariableDefinition struct {
+type VariableDefinition interface {
+	Name() string
+	Type() Type
+	SetType(Type)
+	HasDefaultValue() bool
+	DefaultValue() Value
+	SetDefaultValue(Value)
+}
+
+type variableDefinition struct {
 	nameComponent
 	typeComponent
 	defaultValueComponent

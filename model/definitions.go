@@ -57,7 +57,7 @@ func (def operationDefinition) OperationType() OperationType {
 	return def.typ
 }
 
-func (def operationDefinition) Variables() chan *VariableDefinition {
+func (def operationDefinition) Variables() chan VariableDefinition {
 	return def.variables.Iterator()
 }
 
@@ -82,7 +82,7 @@ func (def *operationDefinition) SetName(s string) {
 	def.name = s
 }
 
-func (def *operationDefinition) AddVariableDefinitions(list ...*VariableDefinition) {
+func (def *operationDefinition) AddVariableDefinitions(list ...VariableDefinition) {
 	def.variables.Add(list...)
 }
 
@@ -94,8 +94,8 @@ func (def *operationDefinition) AddSelections(list ...Selection) {
 	def.selections.Add(list...)
 }
 
-func NewVariableDefinition(name string, typ Type) *VariableDefinition {
-	return &VariableDefinition{
+func NewVariableDefinition(name string, typ Type) VariableDefinition {
+	return &variableDefinition{
 		nameComponent: nameComponent(name),
 		typeComponent: typeComponent{ typ: typ },
 	}
