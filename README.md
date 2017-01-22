@@ -2,6 +2,10 @@
 
 GraphQL for Go
 
+[![Build Status](https://travis-ci.org/lestrrat/go-graphql.png?branch=master)](https://travis-ci.org/lestrrat/go-graphql)
+
+[![GoDoc](https://godoc.org/github.com/lestrrat/go-graphql?status.svg)](https://godoc.org/github.com/lestrrat/go-graphql)
+
 # MOTIVATION
 
 * I really didn't like the implementation of https://github.com/graphql-go/graphql, and couldn't see a way to change it by just sending a few PRs
