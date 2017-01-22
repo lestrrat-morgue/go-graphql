@@ -60,8 +60,8 @@ func (v ObjectDefinition) Configure(attrs ...Attribute) ObjectDefinition {
 			attr.(ObjectBlock).Call(v)
 		case ImplementsDefinition:
 			v.typ.SetImplements(attr.(ImplementsDefinition).typ)
-		case *model.ObjectFieldDefinition:
-			fields.Add(attr.(*model.ObjectFieldDefinition))
+		case model.ObjectFieldDefinition:
+			fields.Add(attr.(model.ObjectFieldDefinition))
 		}
 	}
 
@@ -117,18 +117,18 @@ func (f InterfaceBlock) Call(v InterfaceDefinition) {
 }
 
 type ObjectFieldDefinition struct {
-	field *model.ObjectFieldDefinition
+	field model.ObjectFieldDefinition
 }
-func (def ObjectFieldDefinition) Field() *model.ObjectFieldDefinition {
+func (def ObjectFieldDefinition) Field() model.ObjectFieldDefinition {
 	return def.field
 }
 
-func (v ObjectFieldDefinition) Configure(attrs ...Attribute) ObjectFieldDefinition {
+func (v *ObjectFieldDefinition) Configure(attrs ...Attribute) *ObjectFieldDefinition {
 	var arguments model.ObjectFieldArgumentDefinitionList
 	for _, attr := range attrs {
 		switch attr.(type) {
-		case *model.ObjectFieldArgumentDefinition:
-			arguments = append(arguments, attr.(*model.ObjectFieldArgumentDefinition))
+		case model.ObjectFieldArgumentDefinition:
+			arguments.Add(attr.(model.ObjectFieldArgumentDefinition))
 		}
 	}
 	v.field.AddArguments(arguments...)

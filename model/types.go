@@ -34,8 +34,8 @@ func NewListType(t Type) *ListType {
 	}
 }
 
-func NewObjectFieldArgumentDefinition(name string, typ Type) *ObjectFieldArgumentDefinition {
-	return &ObjectFieldArgumentDefinition{
+func NewObjectFieldArgumentDefinition(name string, typ Type) ObjectFieldArgumentDefinition {
+	return &objectFieldArgumentDefinition{
 		nameComponent: nameComponent(name),
 		typeComponent: typeComponent{typ: typ},
 	}
@@ -48,16 +48,16 @@ func NewObjectDefinition(name string) ObjectDefinition {
 	}
 }
 
-func (t objectDefinition) Fields() chan *ObjectFieldDefinition {
+func (t objectDefinition) Fields() chan ObjectFieldDefinition {
 	return t.fields.Iterator()
 }
 
-func (t *objectDefinition) AddFields(list ...*ObjectFieldDefinition) {
+func (t *objectDefinition) AddFields(list ...ObjectFieldDefinition) {
 	t.fields.Add(list...)
 }
 
-func NewObjectFieldDefinition(name string, typ Type) *ObjectFieldDefinition {
-	return &ObjectFieldDefinition{
+func NewObjectFieldDefinition(name string, typ Type) ObjectFieldDefinition {
+	return &objectFieldDefinition{
 		nameComponent: nameComponent(name),
 		typeComponent: typeComponent{typ: typ},
 	}
@@ -76,11 +76,11 @@ func (t objectDefinition) Implements() NamedType {
 	return t.implements
 }
 
-func (t *ObjectFieldDefinition) AddArguments(list ...*ObjectFieldArgumentDefinition) {
+func (t *objectFieldDefinition) AddArguments(list ...ObjectFieldArgumentDefinition) {
 	t.arguments.Add(list...)
 }
 
-func (t ObjectFieldDefinition) Arguments() chan *ObjectFieldArgumentDefinition {
+func (t objectFieldDefinition) Arguments() chan ObjectFieldArgumentDefinition {
 	return t.arguments.Iterator()
 }
 

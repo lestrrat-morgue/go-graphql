@@ -560,7 +560,7 @@ func (ctx *fmtCtx) fmtObjectDefinition(dst io.Writer, v model.ObjectDefinition) 
 	return nil
 }
 
-func (ctx *fmtCtx) fmtObjectFieldArgumentDefinition(dst io.Writer, v *model.ObjectFieldArgumentDefinition) error {
+func (ctx *fmtCtx) fmtObjectFieldArgumentDefinition(dst io.Writer, v model.ObjectFieldArgumentDefinition) error {
 	var buf bytes.Buffer
 	buf.WriteString(v.Name())
 	buf.WriteString(": ")
@@ -581,7 +581,7 @@ func (ctx *fmtCtx) fmtObjectFieldArgumentDefinition(dst io.Writer, v *model.Obje
 	return nil
 }
 
-func (ctx *fmtCtx) fmtObjectFieldArgumentDefinitionList(dst io.Writer, argch chan *model.ObjectFieldArgumentDefinition) error {
+func (ctx *fmtCtx) fmtObjectFieldArgumentDefinitionList(dst io.Writer, argch chan model.ObjectFieldArgumentDefinition) error {
 	l := len(argch)
 	if l == 0 {
 		return nil

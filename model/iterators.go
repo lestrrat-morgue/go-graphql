@@ -137,14 +137,14 @@ func (v ObjectFieldList) Iterator() chan ObjectField {
 	return ch
 }
 
-type ObjectFieldDefinitionList []*ObjectFieldDefinition
+type ObjectFieldDefinitionList []ObjectFieldDefinition
 
-func (l *ObjectFieldDefinitionList) Add(list ...*ObjectFieldDefinition) {
+func (l *ObjectFieldDefinitionList) Add(list ...ObjectFieldDefinition) {
 	*l = append(*l, list...)
 }
 
-func (v ObjectFieldDefinitionList) Iterator() chan *ObjectFieldDefinition {
-	ch := make(chan *ObjectFieldDefinition, len(v))
+func (v ObjectFieldDefinitionList) Iterator() chan ObjectFieldDefinition {
+	ch := make(chan ObjectFieldDefinition, len(v))
 	for _, e := range v {
 		ch <- e
 	}
@@ -197,14 +197,14 @@ func (v InputFieldDefinitionList) Iterator() chan *InputFieldDefinition {
 	return ch
 }
 
-type ObjectFieldArgumentDefinitionList []*ObjectFieldArgumentDefinition
+type ObjectFieldArgumentDefinitionList []ObjectFieldArgumentDefinition
 
-func (l *ObjectFieldArgumentDefinitionList) Add(list ...*ObjectFieldArgumentDefinition) {
+func (l *ObjectFieldArgumentDefinitionList) Add(list ...ObjectFieldArgumentDefinition) {
 	*l = append(*l, list...)
 }
 
-func (v ObjectFieldArgumentDefinitionList) Iterator() chan *ObjectFieldArgumentDefinition {
-	ch := make(chan *ObjectFieldArgumentDefinition, len(v))
+func (v ObjectFieldArgumentDefinitionList) Iterator() chan ObjectFieldArgumentDefinition {
+	ch := make(chan ObjectFieldArgumentDefinition, len(v))
 	for _, e := range v {
 		ch <- e
 	}

@@ -865,7 +865,7 @@ func (pctx *parseCtx) parseObjectDefinition() (model.ObjectDefinition, error) {
 		return nil, errors.Wrap(err, `object type`)
 	}
 
-	var fields []*model.ObjectFieldDefinition
+	var fields model.ObjectFieldDefinitionList
 	for loop := true; loop; {
 		if peekToken(pctx, BRACE_R) {
 			loop = false
@@ -876,7 +876,7 @@ func (pctx *parseCtx) parseObjectDefinition() (model.ObjectDefinition, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, `failed to parse object type field`)
 		}
-		fields = append(fields, field)
+		fields.Add(field)
 	}
 
 	if _, err := consumeToken(pctx, BRACE_R); err != nil {
@@ -891,7 +891,7 @@ func (pctx *parseCtx) parseObjectDefinition() (model.ObjectDefinition, error) {
 	return def, nil
 }
 
-func (pctx *parseCtx) parseObjectFieldDefinition() (*model.ObjectFieldDefinition, error) {
+func (pctx *parseCtx) parseObjectFieldDefinition() (model.ObjectFieldDefinition, error) {
 	name, err := consumeName(pctx)
 	if err != nil {
 		return nil, errors.Wrap(err, `object field`)

@@ -32,12 +32,12 @@ func Object(name string, attrs ...Attribute) ObjectDefinition {
 	return def.Configure(attrs...)
 }
 
-func ObjectField(name string, typ model.Type, attrs ...Attribute) *model.ObjectFieldDefinition {
+func ObjectField(name string, typ model.Type, attrs ...Attribute) model.ObjectFieldDefinition {
 	var def ObjectFieldDefinition
 	def.field = model.NewObjectFieldDefinition(name, typ)
 	return def.Configure(attrs...).Field()
 }
 
-func ObjectFieldArgument(name string, typ model.Type, attrs ...Attribute) *model.ObjectFieldArgumentDefinition {
+func ObjectFieldArgument(name string, typ model.Type, attrs ...Attribute) model.ObjectFieldArgumentDefinition {
 	return model.NewObjectFieldArgumentDefinition(name, typ)
 }

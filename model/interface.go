@@ -162,8 +162,8 @@ type InlineFragment struct {
 // ObjectDefinition is a definition of a new object type
 type ObjectDefinition interface {
 	Type
-	AddFields(...*ObjectFieldDefinition)
-	Fields() chan *ObjectFieldDefinition
+	AddFields(...ObjectFieldDefinition)
+	Fields() chan ObjectFieldDefinition
 	Name() string
 	HasImplements() bool
 	Implements() NamedType
@@ -178,13 +178,28 @@ type objectDefinition struct {
 	implements    NamedType
 }
 
-type ObjectFieldArgumentDefinition struct {
+type ObjectFieldArgumentDefinition interface {
+	Name() string
+	Type() Type
+	HasDefaultValue() bool
+	DefaultValue() Value
+	SetDefaultValue(Value)
+}
+
+type objectFieldArgumentDefinition struct {
 	nameComponent
 	typeComponent
 	defaultValueComponent
 }
 
-type ObjectFieldDefinition struct {
+type ObjectFieldDefinition interface {
+	Name() string
+	Type() Type
+	Arguments() chan ObjectFieldArgumentDefinition
+	AddArguments(...ObjectFieldArgumentDefinition)
+}
+
+type objectFieldDefinition struct {
 	nameComponent
 	typeComponent
 	arguments ObjectFieldArgumentDefinitionList

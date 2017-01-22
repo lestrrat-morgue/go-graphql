@@ -31,11 +31,11 @@ func _main() error {
 		{Name: "VariableDefinition"},
 		{Name: "ObjectDefinition", Interface: true},
 		{Name: "ObjectField", Interface: true},
-		{Name: "ObjectFieldDefinition"},
+		{Name: "ObjectFieldDefinition", Interface: true},
 		{Name: "EnumElementDefinition"},
 		{Name: "InterfaceFieldDefinition"},
 		{Name: "InputFieldDefinition"},
-		{Name: "ObjectFieldArgumentDefinition"},
+		{Name: "ObjectFieldArgumentDefinition", Interface: true},
 	}
 
 	if err := genIterators(iters, "model/iterators.go"); err != nil {
