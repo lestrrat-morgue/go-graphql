@@ -626,10 +626,10 @@ func (pctx *parseCtx) parseSelection() (model.Selection, error) {
 		pctx.advance()
 		return pctx.parseFragmentSpreadOrInlineFragment()
 	}
-	return pctx.parseField()
+	return pctx.parseSelectionField()
 }
 
-func (pctx *parseCtx) parseField() (*model.Field, error) {
+func (pctx *parseCtx) parseSelectionField() (model.SelectionField, error) {
 	var name string
 	var alias string
 	name, err := consumeName(pctx)
@@ -646,7 +646,7 @@ func (pctx *parseCtx) parseField() (*model.Field, error) {
 		}
 	}
 
-	field := model.NewField(name)
+	field := model.NewSelectionField(name)
 	if len(alias) > 0 {
 		field.SetAlias(alias)
 	}

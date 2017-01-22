@@ -1,45 +1,45 @@
 package model
 
-func NewField(n string) *Field {
-	return &Field{
+func NewSelectionField(n string) SelectionField {
+	return &selectionField{
 		nameComponent: nameComponent(n),
 	}
 }
 
-func (f Field) HasAlias() bool {
+func (f selectionField) HasAlias() bool {
 	return f.hasAlias
 }
 
-func (f Field) Alias() string {
+func (f selectionField) Alias() string {
 	return f.alias
 }
 
-func (f *Field) SetAlias(s string) {
+func (f *selectionField) SetAlias(s string) {
 	f.hasAlias = true
 	f.alias = s
 }
 
-func (f Field) Arguments() chan Argument {
+func (f selectionField) Arguments() chan Argument {
 	return f.arguments.Iterator()
 }
 
-func (f Field) Directives() chan Directive {
+func (f selectionField) Directives() chan Directive {
 	return f.directives.Iterator()
 }
 
-func (f Field) SelectionSet() chan Selection {
+func (f selectionField) Selections() chan Selection {
 	return f.selections.Iterator()
 }
 
-func (f *Field) AddArguments(args ...Argument) {
+func (f *selectionField) AddArguments(args ...Argument) {
 	f.arguments.Add(args...)
 }
 
-func (f *Field) AddDirectives(directives ...Directive) {
+func (f *selectionField) AddDirectives(directives ...Directive) {
 	f.directives.Add(directives...)
 }
 
-func (f *Field) AddSelections(selections ...Selection) {
+func (f *selectionField) AddSelections(selections ...Selection) {
 	f.selections.Add(selections...)
 }
 

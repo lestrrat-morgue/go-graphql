@@ -302,7 +302,20 @@ type directive struct {
 	arguments ArgumentList
 }
 
-type Field struct {
+type SelectionField interface {
+	Namer
+	HasAlias() bool
+	Alias() string
+	SetAlias(string)
+	Arguments() chan Argument
+	Directives() chan Directive
+	Selections() chan Selection
+	AddArguments(...Argument)
+	AddDirectives(...Directive)
+	AddSelections(...Selection)
+}
+
+type selectionField struct {
 	nameComponent
 	hasAlias   bool
 	alias      string

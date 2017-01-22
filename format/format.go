@@ -261,8 +261,8 @@ func (ctx *fmtCtx) fmtSelectionSet(dst io.Writer, ch chan model.Selection) error
 
 func (ctx *fmtCtx) fmtSelection(dst io.Writer, v model.Selection) error {
 	switch v.(type) {
-	case *model.Field:
-		return ctx.fmtField(dst, v.(*model.Field))
+	case model.SelectionField:
+		return ctx.fmtField(dst, v.(model.SelectionField))
 	case *model.FragmentSpread:
 		return ctx.fmtFragmentSpread(dst, v.(*model.FragmentSpread))
 	case *model.InlineFragment:
@@ -327,7 +327,7 @@ func (ctx *fmtCtx) fmtArgumentList(dst io.Writer, argch chan model.Argument) err
 	return nil
 }
 
-func (ctx *fmtCtx) fmtField(dst io.Writer, v *model.Field) error {
+func (ctx *fmtCtx) fmtField(dst io.Writer, v model.SelectionField) error {
 	var buf bytes.Buffer
 
 	if v.HasAlias() {
@@ -348,7 +348,7 @@ func (ctx *fmtCtx) fmtField(dst io.Writer, v *model.Field) error {
 		}
 	}
 
-	selch := v.SelectionSet()
+	selch := v.Selections()
 	if len(selch) > 0 {
 		buf.WriteByte(' ')
 		if err := ctx.fmtSelectionSet(&buf, selch); err != nil {
