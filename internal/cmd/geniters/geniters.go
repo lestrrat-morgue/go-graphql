@@ -29,7 +29,7 @@ func _main() error {
 		{Name: "Selection", Interface: true},
 		{Name: "Type", Interface: true},
 		{Name: "VariableDefinition"},
-		{Name: "ObjectDefinition"},
+		{Name: "ObjectDefinition", Interface: true},
 		{Name: "ObjectField"},
 		{Name: "ObjectFieldDefinition"},
 		{Name: "EnumElementDefinition"},

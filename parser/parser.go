@@ -839,7 +839,7 @@ func (pctx *parseCtx) parseObjectField() (*model.ObjectField, error) {
 	return model.NewObjectField(name, v), nil
 }
 
-func (pctx *parseCtx) parseObjectDefinition() (*model.ObjectDefinition, error) {
+func (pctx *parseCtx) parseObjectDefinition() (model.ObjectDefinition, error) {
 	if _, err := consumeName(pctx, typeKey); err != nil {
 		return nil, errors.Wrap(err, `object type`)
 	}

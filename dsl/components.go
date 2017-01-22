@@ -3,15 +3,15 @@ package dsl
 import "github.com/lestrrat/go-graphql/model"
 
 func Schema(attrs ...model.Definition) *model.Schema {
-	var query *model.ObjectDefinition
+	var query model.ObjectDefinition
 	var types model.ObjectDefinitionList
 	for _, attr := range attrs {
-		if q, ok := attr.(*model.ObjectDefinition); ok && q.Name() == `Query` {
+		if q, ok := attr.(model.ObjectDefinition); ok && q.Name() == `Query` {
 			query = q
 		} else {
 			switch attr.(type) {
-			case *model.ObjectDefinition:
-				types.Add(attr.(*model.ObjectDefinition))
+			case model.ObjectDefinition:
+				types.Add(attr.(model.ObjectDefinition))
 			}
 		}
 	}
@@ -45,10 +45,10 @@ func Description(s string) Attribute {
 }
 
 type ObjectDefinition struct {
-	typ *model.ObjectDefinition
+	typ model.ObjectDefinition
 }
 
-func (v ObjectDefinition) Type() *model.ObjectDefinition {
+func (v ObjectDefinition) Type() model.ObjectDefinition {
 	return v.typ
 }
 

@@ -113,8 +113,8 @@ func (ctx *fmtCtx) fmtDocument(dst io.Writer, v model.Document) error {
 			if err := ctx.fmtFragmentDefinition(&buf, def.(*model.FragmentDefinition)); err != nil {
 				return errors.Wrap(err, `failed to format fragment definition`)
 			}
-		case *model.ObjectDefinition:
-			if err := ctx.fmtObjectDefinition(&buf, def.(*model.ObjectDefinition)); err != nil {
+		case model.ObjectDefinition:
+			if err := ctx.fmtObjectDefinition(&buf, def.(model.ObjectDefinition)); err != nil {
 				return errors.Wrap(err, `failed to format object type definition`)
 			}
 		case *model.InterfaceDefinition:
@@ -525,7 +525,7 @@ func (ctx *fmtCtx) fmtDirectives(dst io.Writer, dirch chan *model.Directive) err
 	return nil
 }
 
-func (ctx *fmtCtx) fmtObjectDefinition(dst io.Writer, v *model.ObjectDefinition) error {
+func (ctx *fmtCtx) fmtObjectDefinition(dst io.Writer, v model.ObjectDefinition) error {
 	var buf bytes.Buffer
 	buf.WriteString("type ")
 	buf.WriteString(v.Name())

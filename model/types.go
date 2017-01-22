@@ -4,19 +4,19 @@ func NewSchema() *Schema {
 	return &Schema{}
 }
 
-func (s Schema) Query() *ObjectDefinition {
+func (s Schema) Query() ObjectDefinition {
 	return s.query
 }
 
-func (s Schema) Types() chan *ObjectDefinition {
+func (s Schema) Types() chan ObjectDefinition {
 	return s.types.Iterator()
 }
 
-func (s *Schema) SetQuery(q *ObjectDefinition) {
+func (s *Schema) SetQuery(q ObjectDefinition) {
 	s.query = q
 }
 
-func (s *Schema) AddTypes(list ...*ObjectDefinition) {
+func (s *Schema) AddTypes(list ...ObjectDefinition) {
 	s.types.Add(list...)
 }
 
@@ -41,18 +41,18 @@ func NewObjectFieldArgumentDefinition(name string, typ Type) *ObjectFieldArgumen
 	}
 }
 
-func NewObjectDefinition(name string) *ObjectDefinition {
-	return &ObjectDefinition{
+func NewObjectDefinition(name string) ObjectDefinition {
+	return &objectDefinition{
 		nameComponent: nameComponent(name),
 		nullable: nullable(true),
 	}
 }
 
-func (t ObjectDefinition) Fields() chan *ObjectFieldDefinition {
+func (t objectDefinition) Fields() chan *ObjectFieldDefinition {
 	return t.fields.Iterator()
 }
 
-func (t *ObjectDefinition) AddFields(list ...*ObjectFieldDefinition) {
+func (t *objectDefinition) AddFields(list ...*ObjectFieldDefinition) {
 	t.fields.Add(list...)
 }
 
@@ -63,16 +63,16 @@ func NewObjectFieldDefinition(name string, typ Type) *ObjectFieldDefinition {
 	}
 }
 
-func (t *ObjectDefinition) SetImplements(typ NamedType) {
+func (t *objectDefinition) SetImplements(typ NamedType) {
 	t.hasImplements = true
 	t.implements = typ
 }
 
-func (t ObjectDefinition) HasImplements() bool {
+func (t objectDefinition) HasImplements() bool {
 	return t.hasImplements
 }
 
-func (t ObjectDefinition) Implements() NamedType {
+func (t objectDefinition) Implements() NamedType {
 	return t.implements
 }
 

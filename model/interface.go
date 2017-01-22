@@ -148,7 +148,17 @@ type InlineFragment struct {
 }
 
 // ObjectDefinition is a definition of a new object type
-type ObjectDefinition struct {
+type ObjectDefinition interface {
+	Type
+	AddFields(...*ObjectFieldDefinition)
+	Fields() chan *ObjectFieldDefinition
+	Name() string
+	HasImplements() bool
+	Implements() NamedType
+	SetImplements(NamedType)
+}
+
+type objectDefinition struct {
 	nullable
 	nameComponent
 	fields        ObjectFieldDefinitionList
@@ -206,6 +216,6 @@ type InputFieldDefinition struct {
 }
 
 type Schema struct {
-	query *ObjectDefinition // But must be a query
+	query ObjectDefinition // But must be a query
 	types ObjectDefinitionList
 }
