@@ -27,8 +27,8 @@ func NewNamedType(name string) NamedType {
 	}
 }
 
-func NewListType(t Type) *ListType {
-	return &ListType{
+func NewListType(t Type) ListType {
+	return &listType{
 		nullable:      true,
 		typeComponent: typeComponent{typ: t},
 	}

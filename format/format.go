@@ -462,8 +462,8 @@ func (ctx *fmtCtx) fmtType(dst io.Writer, v model.Type) error {
 	switch v.(type) {
 	case model.NamedType:
 		return ctx.fmtNamedType(dst, v.(model.NamedType))
-	case *model.ListType:
-		return ctx.fmtListType(dst, v.(*model.ListType))
+	case model.ListType:
+		return ctx.fmtListType(dst, v.(model.ListType))
 	default:
 		return errors.Errorf(`invalid type %s`, v)
 	}
@@ -481,7 +481,7 @@ func (ctx *fmtCtx) fmtNamedType(dst io.Writer, v model.NamedType) error {
 	return nil
 }
 
-func (ctx *fmtCtx) fmtListType(dst io.Writer, v *model.ListType) error {
+func (ctx *fmtCtx) fmtListType(dst io.Writer, v model.ListType) error {
 	var buf bytes.Buffer
 	buf.WriteByte('[')
 	if err := ctx.fmtType(&buf, v.Type()); err != nil {

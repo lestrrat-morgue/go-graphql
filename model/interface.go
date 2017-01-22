@@ -218,7 +218,6 @@ type inputFieldDefinition struct {
 type NamedType interface {
 	Nullable
 	Namer
-	Type
 }
 
 type namedType struct {
@@ -227,7 +226,12 @@ type namedType struct {
 	nameComponent
 }
 
-type ListType struct {
+type ListType interface {
+	Nullable
+	Type() Type
+}
+
+type listType struct {
 	nullable
 	typeComponent
 }

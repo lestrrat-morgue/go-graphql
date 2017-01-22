@@ -14,7 +14,7 @@ func String() model.Type {
 	return model.NewNamedType(`String`)
 }
 
-func List(t model.Type) *model.ListType {
+func List(t model.Type) model.ListType {
 	return model.NewListType(t)
 }
 
