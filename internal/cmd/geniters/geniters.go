@@ -22,8 +22,8 @@ type iterspec struct {
 
 func _main() error {
 	var iters = []iterspec{
-		{Name: "Argument"},
-		{Name: "Directive"},
+		{Name: "Argument", Interface: true},
+		{Name: "Directive", Interface: true},
 		{Name: "Definition", Interface: true},
 		{Name: "NamedType", Interface: true},
 		{Name: "Selection", Interface: true},

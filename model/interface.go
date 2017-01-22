@@ -1,5 +1,20 @@
 package model
 
+type Namer interface {
+	Name() string
+}
+
+type Typer interface {
+	Type() Type
+	SetType(Type)
+}
+
+type DefaultValuer interface {
+	HasDefaultValue() bool
+	DefaultValue() Value
+	SetDefaultValue(Value)
+}
+
 type Definition interface{}
 type Document interface {
 	Definitions() chan Definition
@@ -23,10 +38,10 @@ type OperationDefinition interface {
 	Name() string
 	SetName(string)
 	Variables() chan VariableDefinition
-	Directives() chan *Directive
+	Directives() chan Directive
 	Selections() chan Selection
 	AddVariableDefinitions(...VariableDefinition)
-	AddDirectives(...*Directive)
+	AddDirectives(...Directive)
 	AddSelections(...Selection)
 }
 
@@ -36,14 +51,24 @@ type operationDefinition struct {
 	name       string
 	variables  VariableDefinitionList
 	directives DirectiveList
-	selections SelectionSet
+	selections SelectionList
 }
 
-type FragmentDefinition struct {
+type FragmentDefinition interface {
+	Namer
+	Typer
+
+	Directives() chan Directive
+	Selections() chan Selection
+	AddDirectives(...Directive)
+	AddSelections(...Selection)
+}
+
+type fragmentDefinition struct {
 	nameComponent
 	typeComponent
 	directives DirectiveList
-	selections SelectionSet
+	selections SelectionList
 }
 
 type Type interface {
@@ -52,7 +77,7 @@ type Type interface {
 }
 
 type NamedType interface {
-	Name() string
+	Namer
 	Type
 }
 
@@ -68,12 +93,9 @@ type ListType struct {
 }
 
 type VariableDefinition interface {
-	Name() string
-	Type() Type
-	SetType(Type)
-	HasDefaultValue() bool
-	DefaultValue() Value
-	SetDefaultValue(Value)
+	Namer
+	Typer
+	DefaultValuer
 }
 
 type variableDefinition struct {
@@ -114,7 +136,7 @@ type EnumValue struct {
 
 // ObjectField represents a literal object's field (NOT a type)
 type ObjectField interface {
-	Name() string
+	Namer
 	Value() Value
 	SetValue(Value)
 }
@@ -136,14 +158,23 @@ type objectValue struct {
 
 type Selection interface{}
 
-type SelectionSet []Selection
+type Argument interface {
+	Namer
+	Value() Value
+}
 
-type Argument struct {
+type argument struct {
 	nameComponent
 	valueComponent
 }
 
-type Directive struct {
+type Directive interface {
+	Namer
+	Arguments() chan Argument
+	AddArguments(...Argument)
+}
+
+type directive struct {
 	name      string
 	arguments ArgumentList
 }
@@ -154,7 +185,7 @@ type Field struct {
 	alias      string
 	arguments  ArgumentList
 	directives DirectiveList
-	selections SelectionSet
+	selections SelectionList
 }
 
 type FragmentSpread struct {
@@ -164,16 +195,16 @@ type FragmentSpread struct {
 
 type InlineFragment struct {
 	directives DirectiveList
-	selections SelectionSet
+	selections SelectionList
 	typ        NamedType
 }
 
 // ObjectDefinition is a definition of a new object type
 type ObjectDefinition interface {
+	Namer
 	Type
 	AddFields(...ObjectFieldDefinition)
 	Fields() chan ObjectFieldDefinition
-	Name() string
 	HasImplements() bool
 	Implements() NamedType
 	SetImplements(NamedType)
@@ -188,11 +219,9 @@ type objectDefinition struct {
 }
 
 type ObjectFieldArgumentDefinition interface {
-	Name() string
-	Type() Type
-	HasDefaultValue() bool
-	DefaultValue() Value
-	SetDefaultValue(Value)
+	Namer
+	Typer
+	DefaultValuer
 }
 
 type objectFieldArgumentDefinition struct {
@@ -202,8 +231,8 @@ type objectFieldArgumentDefinition struct {
 }
 
 type ObjectFieldDefinition interface {
-	Name() string
-	Type() Type
+	Namer
+	Typer
 	Arguments() chan ObjectFieldArgumentDefinition
 	AddArguments(...ObjectFieldArgumentDefinition)
 }

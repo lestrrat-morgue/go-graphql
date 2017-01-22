@@ -275,7 +275,7 @@ func (pctx *parseCtx) parseFragmentName() (string, error) {
 //   fragment FragmentName TypeCondition Directives? SelectionSet
 // FragmentName:
 //   Name but not on
-func (pctx *parseCtx) parseFragmentDefinition() (*model.FragmentDefinition, error) {
+func (pctx *parseCtx) parseFragmentDefinition() (model.FragmentDefinition, error) {
 	t, err := consumeToken(pctx, NAME)
 	if err != nil {
 		return nil, errors.Wrap(err, `fragment definition`)
@@ -588,12 +588,12 @@ func (pctx *parseCtx) parseDirectives() (model.DirectiveList, error) {
 
 // SelectionSet:
 //   { Selection... }
-func (pctx *parseCtx) parseSelectionSet() (model.SelectionSet, error) {
+func (pctx *parseCtx) parseSelectionSet() (model.SelectionList, error) {
 	if _, err := consumeToken(pctx, BRACE_L); err != nil {
 		return nil, errors.Wrap(err, `selection set`)
 	}
 
-	var set model.SelectionSet
+	var set model.SelectionList
 	for loop := true; loop; {
 		if peekToken(pctx, BRACE_R) {
 			loop = false

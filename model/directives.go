@@ -1,19 +1,19 @@
 package model
 
-func NewDirective(name string) *Directive {
-	return &Directive{
+func NewDirective(name string) Directive {
+	return &directive{
 		name: name,
 	}
 }
 
-func (d Directive) Name() string {
+func (d directive) Name() string {
 	return d.name
 }
 
-func (d Directive) Arguments() chan *Argument {
+func (d directive) Arguments() chan Argument {
 	return d.arguments.Iterator()
 }
 
-func (d *Directive) AddArguments(args ...*Argument) {
+func (d *directive) AddArguments(args ...Argument) {
 	d.arguments.Add(args...)
 }

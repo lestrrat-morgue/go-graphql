@@ -8,7 +8,7 @@ func (f *InlineFragment) AddSelections(list ...Selection) {
 	f.selections.Add(list...)
 }
 
-func (f *InlineFragment) AddDirectives(list ...*Directive) {
+func (f *InlineFragment) AddDirectives(list ...Directive) {
 	f.directives.Add(list...)
 }
 
@@ -24,27 +24,31 @@ func (f InlineFragment) SelectionSet() chan Selection {
 	return f.selections.Iterator()
 }
 
-func (f InlineFragment) Directives() chan *Directive {
+func (f InlineFragment) Directives() chan Directive {
 	return f.directives.Iterator()
 }
 
-func NewFragmentDefinition(name string, typ NamedType) *FragmentDefinition {
-	return &FragmentDefinition{
+func NewFragmentDefinition(name string, typ NamedType) FragmentDefinition {
+	return &fragmentDefinition{
 		nameComponent: nameComponent(name),
 		typeComponent: typeComponent{typ: typ},
 	}
 }
 
-func (f FragmentDefinition) SelectionSet() chan Selection {
+func (f fragmentDefinition) Selections() chan Selection {
 	return f.selections.Iterator()
 }
 
-func (f *FragmentDefinition) AddSelections(selections ...Selection) {
+func (f *fragmentDefinition) AddSelections(selections ...Selection) {
 	f.selections.Add(selections...)
 }
 
-func (def *FragmentDefinition) AddDirectives(list ...*Directive) {
-	def.directives.Add(list...)
+func (f fragmentDefinition) Directives() chan Directive {
+	return f.directives.Iterator()
+}
+
+func (f *fragmentDefinition) AddDirectives(list ...Directive) {
+	f.directives.Add(list...)
 }
 
 func NewOperationDefinition(typ OperationType) OperationDefinition {
@@ -65,7 +69,7 @@ func (def operationDefinition) Selections() chan Selection {
 	return def.selections.Iterator()
 }
 
-func (def operationDefinition) Directives() chan *Directive {
+func (def operationDefinition) Directives() chan Directive {
 	return def.directives.Iterator()
 }
 
@@ -86,7 +90,7 @@ func (def *operationDefinition) AddVariableDefinitions(list ...VariableDefinitio
 	def.variables.Add(list...)
 }
 
-func (def *operationDefinition) AddDirectives(list ...*Directive) {
+func (def *operationDefinition) AddDirectives(list ...Directive) {
 	def.directives.Add(list...)
 }
 

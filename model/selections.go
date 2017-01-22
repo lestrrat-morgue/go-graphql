@@ -1,18 +1,5 @@
 package model
 
-func (s *SelectionSet) Add(list ...Selection) {
-	*s = append(*s, list...)
-}
-
-func (s SelectionSet) Iterator() chan Selection {
-	ch := make(chan Selection, len(s))
-	for _, sel := range s {
-		ch <- sel
-	}
-	close(ch)
-	return ch
-}
-
 func NewField(n string) *Field {
 	return &Field{
 		nameComponent: nameComponent(n),
@@ -32,11 +19,11 @@ func (f *Field) SetAlias(s string) {
 	f.alias = s
 }
 
-func (f Field) Arguments() chan *Argument {
+func (f Field) Arguments() chan Argument {
 	return f.arguments.Iterator()
 }
 
-func (f Field) Directives() chan *Directive {
+func (f Field) Directives() chan Directive {
 	return f.directives.Iterator()
 }
 
@@ -44,11 +31,11 @@ func (f Field) SelectionSet() chan Selection {
 	return f.selections.Iterator()
 }
 
-func (f *Field) AddArguments(args ...*Argument) {
+func (f *Field) AddArguments(args ...Argument) {
 	f.arguments.Add(args...)
 }
 
-func (f *Field) AddDirectives(directives ...*Directive) {
+func (f *Field) AddDirectives(directives ...Directive) {
 	f.directives.Add(directives...)
 }
 
@@ -62,6 +49,6 @@ func NewFragmentSpread(name string) *FragmentSpread {
 	}
 }
 
-func (f *FragmentSpread) AddDirectives(directives ...*Directive) {
+func (f *FragmentSpread) AddDirectives(directives ...Directive) {
 	f.directives.Add(directives...)
 }

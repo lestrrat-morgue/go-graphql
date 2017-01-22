@@ -109,8 +109,8 @@ func (ctx *fmtCtx) fmtDocument(dst io.Writer, v model.Document) error {
 			if err := ctx.fmtOperationDefinition(&buf, def.(model.OperationDefinition)); err != nil {
 				return errors.Wrap(err, `failed to format operation definition`)
 			}
-		case *model.FragmentDefinition:
-			if err := ctx.fmtFragmentDefinition(&buf, def.(*model.FragmentDefinition)); err != nil {
+		case model.FragmentDefinition:
+			if err := ctx.fmtFragmentDefinition(&buf, def.(model.FragmentDefinition)); err != nil {
 				return errors.Wrap(err, `failed to format fragment definition`)
 			}
 		case model.ObjectDefinition:
@@ -142,7 +142,7 @@ func (ctx *fmtCtx) fmtDocument(dst io.Writer, v model.Document) error {
 	return nil
 }
 
-func (ctx *fmtCtx) fmtFragmentDefinition(dst io.Writer, v *model.FragmentDefinition) error {
+func (ctx *fmtCtx) fmtFragmentDefinition(dst io.Writer, v model.FragmentDefinition) error {
 	var buf bytes.Buffer
 
 	buf.WriteString("fragment ")
@@ -155,7 +155,7 @@ func (ctx *fmtCtx) fmtFragmentDefinition(dst io.Writer, v *model.FragmentDefinit
 
 	// Directives
 
-	selch := v.SelectionSet()
+	selch := v.Selections()
 	if len(selch) > 0 {
 		buf.WriteByte(' ')
 		if err := ctx.fmtSelectionSet(&buf, selch); err != nil {
@@ -301,7 +301,7 @@ func (ctx *fmtCtx) fmtInlineFragment(dst io.Writer, v *model.InlineFragment) err
 	return nil
 }
 
-func (ctx *fmtCtx) fmtArgumentList(dst io.Writer, argch chan *model.Argument) error {
+func (ctx *fmtCtx) fmtArgumentList(dst io.Writer, argch chan model.Argument) error {
 	l := len(argch)
 	if l == 0 {
 		return nil
@@ -374,7 +374,7 @@ func (ctx *fmtCtx) fmtFragmentSpread(dst io.Writer, v *model.FragmentSpread) err
 	return nil
 }
 
-func (ctx *fmtCtx) fmtArgument(dst io.Writer, v *model.Argument) error {
+func (ctx *fmtCtx) fmtArgument(dst io.Writer, v model.Argument) error {
 	var buf bytes.Buffer
 	buf.WriteString(v.Name())
 	buf.WriteString(": ")
@@ -498,7 +498,7 @@ func (ctx *fmtCtx) fmtListType(dst io.Writer, v *model.ListType) error {
 	return nil
 }
 
-func (ctx *fmtCtx) fmtDirectives(dst io.Writer, dirch chan *model.Directive) error {
+func (ctx *fmtCtx) fmtDirectives(dst io.Writer, dirch chan model.Directive) error {
 	l := len(dirch)
 	if l == 0 {
 		return nil
