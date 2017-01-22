@@ -165,6 +165,29 @@ type enumElementDefinition struct {
 	valueComponent
 }
 
+type InterfaceDefinition interface {
+	Nullable
+	Namer
+	Fields() chan InterfaceFieldDefinition
+	AddFields(...InterfaceFieldDefinition)
+}
+
+type interfaceDefinition struct {
+	nullable
+	nameComponent
+	fields InterfaceFieldDefinitionList
+}
+
+type InterfaceFieldDefinition interface {
+	Namer
+	Typer
+}
+
+type interfaceFieldDefinition struct {
+	nameComponent
+	typeComponent
+}
+
 type NamedType interface {
 	Nullable
 	Namer
@@ -276,17 +299,6 @@ type InlineFragment struct {
 	directives DirectiveList
 	selections SelectionList
 	typ        NamedType
-}
-
-type InterfaceDefinition struct {
-	nullable
-	nameComponent
-	fields InterfaceFieldDefinitionList
-}
-
-type InterfaceFieldDefinition struct {
-	nameComponent
-	typeComponent
 }
 
 type UnionDefinition struct {

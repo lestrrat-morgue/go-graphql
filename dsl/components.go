@@ -76,10 +76,10 @@ func (f ObjectBlock) Call(v ObjectDefinition) {
 }
 
 type InterfaceDefinition struct {
-	typ *model.InterfaceDefinition
+	typ model.InterfaceDefinition
 }
 
-func (v InterfaceDefinition) Type() *model.InterfaceDefinition {
+func (v InterfaceDefinition) Type() model.InterfaceDefinition {
 	return v.typ
 }
 
@@ -101,8 +101,8 @@ func (v InterfaceDefinition) Configure(attrs ...Attribute) InterfaceDefinition {
 		switch attr.(type) {
 		case InterfaceBlock:
 			attr.(InterfaceBlock).Call(v)
-		case *model.InterfaceFieldDefinition:
-			fields.Add(attr.(*model.InterfaceFieldDefinition))
+		case model.InterfaceFieldDefinition:
+			fields.Add(attr.(model.InterfaceFieldDefinition))
 		}
 	}
 

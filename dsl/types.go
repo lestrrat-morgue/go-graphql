@@ -24,7 +24,7 @@ func Interface(name string, attrs ...Attribute) InterfaceDefinition {
 	return def.Configure(attrs...)
 }
 
-func InterfaceField(name string, typ model.Type, attrs ...Attribute) *model.InterfaceFieldDefinition {
+func InterfaceField(name string, typ model.Type, attrs ...Attribute) model.InterfaceFieldDefinition {
 	return model.NewInterfaceFieldDefinition(name, typ)
 }
 

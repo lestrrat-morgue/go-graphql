@@ -106,8 +106,8 @@ func NewEnumElementDefinition(name string, value Value) EnumElementDefinition {
 	}
 }
 
-func NewInterfaceDefinition(name string) *InterfaceDefinition {
-	return &InterfaceDefinition{
+func NewInterfaceDefinition(name string) InterfaceDefinition {
+	return &interfaceDefinition{
 		nullable:      nullable(true),
 		nameComponent: nameComponent(name),
 	}
@@ -117,25 +117,25 @@ type Resolver interface {
 	Resolve(interface{}) Type
 }
 
-func (iface *InterfaceDefinition) SetTypeResolver(v Resolver) {}
-func (iface *InterfaceDefinition) TypeResolver() Resolver     { return nil }
+func (iface *interfaceDefinition) SetTypeResolver(v Resolver) {}
+func (iface *interfaceDefinition) TypeResolver() Resolver     { return nil }
 
-func (iface InterfaceDefinition) Fields() chan *InterfaceFieldDefinition {
+func (iface interfaceDefinition) Fields() chan InterfaceFieldDefinition {
 	return iface.fields.Iterator()
 }
 
-func (iface *InterfaceDefinition) AddFields(list ...*InterfaceFieldDefinition) {
+func (iface *interfaceDefinition) AddFields(list ...InterfaceFieldDefinition) {
 	iface.fields.Add(list...)
 }
 
-func NewInterfaceFieldDefinition(name string, typ Type) *InterfaceFieldDefinition {
-	return &InterfaceFieldDefinition{
+func NewInterfaceFieldDefinition(name string, typ Type) InterfaceFieldDefinition {
+	return &interfaceFieldDefinition{
 		nameComponent: nameComponent(name),
 		typeComponent: typeComponent{typ: typ},
 	}
 }
 
-func (f *InterfaceFieldDefinition) Type() Type {
+func (f *interfaceFieldDefinition) Type() Type {
 	return f.typ
 }
 

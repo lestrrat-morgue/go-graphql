@@ -1011,7 +1011,7 @@ func (pctx *parseCtx) parseEnumDefinition() (model.EnumDefinition, error) {
 	return def, nil
 }
 
-func (pctx *parseCtx) parseInterfaceDefinition() (*model.InterfaceDefinition, error) {
+func (pctx *parseCtx) parseInterfaceDefinition() (model.InterfaceDefinition, error) {
 	if _, err := consumeName(pctx, interfaceKey); err != nil {
 		return nil, errors.Wrap(err, `interface`)
 	}
@@ -1025,7 +1025,7 @@ func (pctx *parseCtx) parseInterfaceDefinition() (*model.InterfaceDefinition, er
 		return nil, errors.Wrap(err, `interface`)
 	}
 
-	var fields []*model.InterfaceFieldDefinition
+	var fields model.InterfaceFieldDefinitionList
 	for loop := true; loop; {
 		if peekToken(pctx, BRACE_R) {
 			loop = false
@@ -1036,7 +1036,7 @@ func (pctx *parseCtx) parseInterfaceDefinition() (*model.InterfaceDefinition, er
 		if err != nil {
 			return nil, errors.Wrap(err, `interface`)
 		}
-		fields = append(fields, field)
+		fields.Add(field)
 	}
 
 	if _, err := consumeToken(pctx, BRACE_R); err != nil {
@@ -1047,7 +1047,7 @@ func (pctx *parseCtx) parseInterfaceDefinition() (*model.InterfaceDefinition, er
 	return iface, nil
 }
 
-func (pctx *parseCtx) parseInterfaceDefinitionField() (*model.InterfaceFieldDefinition, error) {
+func (pctx *parseCtx) parseInterfaceDefinitionField() (model.InterfaceFieldDefinition, error) {
 	name, err := consumeName(pctx)
 	if err != nil {
 		return nil, errors.Wrap(err, `interface field`)

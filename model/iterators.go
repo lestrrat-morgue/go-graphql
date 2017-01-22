@@ -167,14 +167,14 @@ func (v EnumElementDefinitionList) Iterator() chan EnumElementDefinition {
 	return ch
 }
 
-type InterfaceFieldDefinitionList []*InterfaceFieldDefinition
+type InterfaceFieldDefinitionList []InterfaceFieldDefinition
 
-func (l *InterfaceFieldDefinitionList) Add(list ...*InterfaceFieldDefinition) {
+func (l *InterfaceFieldDefinitionList) Add(list ...InterfaceFieldDefinition) {
 	*l = append(*l, list...)
 }
 
-func (v InterfaceFieldDefinitionList) Iterator() chan *InterfaceFieldDefinition {
-	ch := make(chan *InterfaceFieldDefinition, len(v))
+func (v InterfaceFieldDefinitionList) Iterator() chan InterfaceFieldDefinition {
+	ch := make(chan InterfaceFieldDefinition, len(v))
 	for _, e := range v {
 		ch <- e
 	}

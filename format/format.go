@@ -117,8 +117,8 @@ func (ctx *fmtCtx) fmtDocument(dst io.Writer, v model.Document) error {
 			if err := ctx.fmtObjectDefinition(&buf, def.(model.ObjectDefinition)); err != nil {
 				return errors.Wrap(err, `failed to format object type definition`)
 			}
-		case *model.InterfaceDefinition:
-			if err := ctx.fmtInterfaceDefinition(&buf, def.(*model.InterfaceDefinition)); err != nil {
+		case model.InterfaceDefinition:
+			if err := ctx.fmtInterfaceDefinition(&buf, def.(model.InterfaceDefinition)); err != nil {
 				return errors.Wrap(err, `failed to format object type definition`)
 			}
 		case model.EnumDefinition:
@@ -641,7 +641,7 @@ func (ctx *fmtCtx) fmtEnumElementDefinitionList(dst io.Writer, ech chan model.En
 	return nil
 }
 
-func (ctx *fmtCtx) fmtInterfaceDefinition(dst io.Writer, v *model.InterfaceDefinition) error {
+func (ctx *fmtCtx) fmtInterfaceDefinition(dst io.Writer, v model.InterfaceDefinition) error {
 	var buf bytes.Buffer
 
 	buf.WriteString("interface ")
@@ -667,7 +667,7 @@ func (ctx *fmtCtx) fmtInterfaceDefinition(dst io.Writer, v *model.InterfaceDefin
 	return nil
 }
 
-func (ctx *fmtCtx) fmtInterfaceFieldDefinition(dst io.Writer, v *model.InterfaceFieldDefinition) error {
+func (ctx *fmtCtx) fmtInterfaceFieldDefinition(dst io.Writer, v model.InterfaceFieldDefinition) error {
 	var buf bytes.Buffer
 
 	buf.WriteString(v.Name())
