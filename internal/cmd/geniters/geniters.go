@@ -30,7 +30,7 @@ func _main() error {
 		{Name: "Type", Interface: true},
 		{Name: "VariableDefinition"},
 		{Name: "ObjectDefinition", Interface: true},
-		{Name: "ObjectField"},
+		{Name: "ObjectField", Interface: true},
 		{Name: "ObjectFieldDefinition"},
 		{Name: "EnumElementDefinition"},
 		{Name: "InterfaceFieldDefinition"},

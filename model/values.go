@@ -86,8 +86,8 @@ func (v EnumValue) Value() interface{} {
 	return v.Name()
 }
 
-func NewObjectField(name string, value Value) *ObjectField {
-	return &ObjectField{
+func NewObjectField(name string, value Value) ObjectField {
+	return &objectField{
 		nameComponent: nameComponent(name),
 		valueComponent: valueComponent{value: value},
 	}
@@ -97,11 +97,11 @@ func NewObjectValue() *ObjectValue {
 	return &ObjectValue{}
 }
 
-func (o *ObjectValue) Fields() chan *ObjectField {
+func (o *ObjectValue) Fields() chan ObjectField {
 	return o.fields.Iterator()
 }
 
-func (o *ObjectValue) AddFields(f ...*ObjectField) {
+func (o *ObjectValue) AddFields(f ...ObjectField) {
 	o.fields.Add(f...)
 }
 

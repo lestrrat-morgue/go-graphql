@@ -104,7 +104,13 @@ type EnumValue struct {
 }
 
 // ObjectField represents a literal object's field (NOT a type)
-type ObjectField struct {
+type ObjectField interface {
+	Name() string
+	Value() Value
+	SetValue(Value)
+}
+
+type objectField struct {
 	nameComponent
 	valueComponent
 }

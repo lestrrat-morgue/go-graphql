@@ -122,14 +122,14 @@ func (v ObjectDefinitionList) Iterator() chan ObjectDefinition {
 	return ch
 }
 
-type ObjectFieldList []*ObjectField
+type ObjectFieldList []ObjectField
 
-func (l *ObjectFieldList) Add(list ...*ObjectField) {
+func (l *ObjectFieldList) Add(list ...ObjectField) {
 	*l = append(*l, list...)
 }
 
-func (v ObjectFieldList) Iterator() chan *ObjectField {
-	ch := make(chan *ObjectField, len(v))
+func (v ObjectFieldList) Iterator() chan ObjectField {
+	ch := make(chan ObjectField, len(v))
 	for _, e := range v {
 		ch <- e
 	}

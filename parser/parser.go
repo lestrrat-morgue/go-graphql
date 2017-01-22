@@ -822,7 +822,7 @@ func (pctx *parseCtx) parseObjectValue() (*model.ObjectValue, error) {
 	return obj, nil
 }
 
-func (pctx *parseCtx) parseObjectField() (*model.ObjectField, error) {
+func (pctx *parseCtx) parseObjectField() (model.ObjectField, error) {
 	name, err := consumeName(pctx)
 	if err != nil {
 		return nil, errors.Wrap(err, `object field`)
