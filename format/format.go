@@ -105,8 +105,8 @@ func (ctx *fmtCtx) fmtDocument(dst io.Writer, v model.Document) error {
 		}
 
 		switch def.(type) {
-		case *model.OperationDefinition:
-			if err := ctx.fmtOperationDefinition(&buf, def.(*model.OperationDefinition)); err != nil {
+		case model.OperationDefinition:
+			if err := ctx.fmtOperationDefinition(&buf, def.(model.OperationDefinition)); err != nil {
 				return errors.Wrap(err, `failed to format operation definition`)
 			}
 		case *model.FragmentDefinition:
@@ -205,20 +205,20 @@ func (ctx *fmtCtx) fmtVariableDefinitionList(dst io.Writer, vdefch chan *model.V
 	return nil
 }
 
-func (ctx *fmtCtx) fmtOperationDefinition(dst io.Writer, v *model.OperationDefinition) error {
+func (ctx *fmtCtx) fmtOperationDefinition(dst io.Writer, v model.OperationDefinition) error {
 	var buf bytes.Buffer
-	buf.WriteString(string(v.Type()))
+	buf.WriteString(string(v.OperationType()))
 	if v.HasName() {
 		buf.WriteByte(' ')
 		buf.WriteString(v.Name())
 	}
 
-	if err := ctx.fmtVariableDefinitionList(&buf, v.VariableDefinitions()); err != nil {
+	if err := ctx.fmtVariableDefinitionList(&buf, v.Variables()); err != nil {
 		return errors.Wrap(err, `failed to format variable definitions`)
 	}
 
 	buf.WriteByte(' ')
-	if err := ctx.fmtSelectionSet(&buf, v.SelectionSet()); err != nil {
+	if err := ctx.fmtSelectionSet(&buf, v.Selections()); err != nil {
 		return errors.Wrap(err, `failed to format selection set`)
 	}
 

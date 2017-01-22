@@ -62,6 +62,21 @@ func (v NamedTypeList) Iterator() chan NamedType {
 	return ch
 }
 
+type SelectionList []Selection
+
+func (l *SelectionList) Add(list ...Selection) {
+	*l = append(*l, list...)
+}
+
+func (v SelectionList) Iterator() chan Selection {
+	ch := make(chan Selection, len(v))
+	for _, e := range v {
+		ch <- e
+	}
+	close(ch)
+	return ch
+}
+
 type TypeList []Type
 
 func (l *TypeList) Add(list ...Type) {

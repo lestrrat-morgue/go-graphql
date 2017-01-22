@@ -26,6 +26,7 @@ func _main() error {
 		{Name: "Directive"},
 		{Name: "Definition", Interface: true},
 		{Name: "NamedType", Interface: true},
+		{Name: "Selection", Interface: true},
 		{Name: "Type", Interface: true},
 		{Name: "VariableDefinition"},
 		{Name: "ObjectDefinition"},

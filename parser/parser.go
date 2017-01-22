@@ -319,7 +319,7 @@ func (pctx *parseCtx) parseFragmentDefinition() (*model.FragmentDefinition, erro
 //   SelectionSet
 // OperationType: one of
 //	 query	mutation
-func (pctx *parseCtx) parseOperationDefinition(implicitType bool) (*model.OperationDefinition, error) {
+func (pctx *parseCtx) parseOperationDefinition(implicitType bool) (model.OperationDefinition, error) {
 	var optyp model.OperationType
 	if implicitType {
 		optyp = model.OperationTypeQuery

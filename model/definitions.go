@@ -47,52 +47,51 @@ func (def *FragmentDefinition) AddDirectives(list ...*Directive) {
 	def.directives.Add(list...)
 }
 
-func NewOperationDefinition(typ OperationType) *OperationDefinition {
-	return &OperationDefinition{
+func NewOperationDefinition(typ OperationType) OperationDefinition {
+	return &operationDefinition{
 		typ: typ,
 	}
 }
 
-func (def OperationDefinition) Type() OperationType {
+func (def operationDefinition) OperationType() OperationType {
 	return def.typ
 }
 
-func (def OperationDefinition) VariableDefinitions() chan *VariableDefinition {
-	ch := make(chan *VariableDefinition, len(def.vardefs))
-	for _, vdef := range def.vardefs {
-		ch <- vdef
-	}
-	close(ch)
-	return ch
+func (def operationDefinition) Variables() chan *VariableDefinition {
+	return def.variables.Iterator()
 }
 
-func (def OperationDefinition) SelectionSet() chan Selection {
+func (def operationDefinition) Selections() chan Selection {
 	return def.selections.Iterator()
 }
 
-func (def OperationDefinition) HasName() bool {
+func (def operationDefinition) Directives() chan *Directive {
+	return def.directives.Iterator()
+}
+
+func (def operationDefinition) HasName() bool {
 	return def.hasName
 }
 
-func (def OperationDefinition) Name() string {
+func (def operationDefinition) Name() string {
 	return def.name
 }
 
-func (def *OperationDefinition) SetName(s string) {
+func (def *operationDefinition) SetName(s string) {
 	def.hasName = true
 	def.name = s
 }
 
-func (def *OperationDefinition) AddVariableDefinitions(list ...*VariableDefinition) {
-	def.vardefs = append(def.vardefs, list...)
+func (def *operationDefinition) AddVariableDefinitions(list ...*VariableDefinition) {
+	def.variables.Add(list...)
 }
 
-func (def *OperationDefinition) AddDirectives(list ...*Directive) {
-	def.directives = append(def.directives, list...)
+func (def *operationDefinition) AddDirectives(list ...*Directive) {
+	def.directives.Add(list...)
 }
 
-func (def *OperationDefinition) AddSelections(list ...Selection) {
-	def.selections = append(def.selections, list...)
+func (def *operationDefinition) AddSelections(list ...Selection) {
+	def.selections.Add(list...)
 }
 
 func NewVariableDefinition(name string, typ Type) *VariableDefinition {

@@ -1,13 +1,13 @@
 package model
 
-type Definition interface {}
+type Definition interface{}
 type Document interface {
 	Definitions() chan Definition
 	AddDefinitions(...Definition)
 }
 type document struct {
 	definitions DefinitionList
-	types TypeList
+	types       TypeList
 }
 
 type OperationType string
@@ -17,11 +17,24 @@ const (
 	OperationTypeMutation OperationType = "mutation"
 )
 
-type OperationDefinition struct {
+type OperationDefinition interface {
+	OperationType() OperationType
+	HasName() bool
+	Name() string
+	SetName(string)
+	Variables() chan *VariableDefinition
+	Directives() chan *Directive
+	Selections() chan Selection
+	AddVariableDefinitions(...*VariableDefinition)
+	AddDirectives(...*Directive)
+	AddSelections(...Selection)
+}
+
+type operationDefinition struct {
 	typ        OperationType
 	hasName    bool
 	name       string
-	vardefs    VariableDefinitionList
+	variables  VariableDefinitionList
 	directives DirectiveList
 	selections SelectionSet
 }
@@ -154,7 +167,6 @@ type ObjectFieldDefinition struct {
 	typeComponent
 	arguments ObjectFieldArgumentDefinitionList
 }
-
 
 type EnumDefinition struct {
 	nullable // is this kosher?
