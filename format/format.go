@@ -46,7 +46,7 @@ var fmtHandler = &visitor.Handler{
 	LeaveObjectDefinition:         leaveObjectDefinition,
 	EnterObjectFieldDefinition:    enterObjectFieldDefinition,
 	EnterEnumDefinition:           enterEnumDefinition,
-	LeaveSchema: leaveSchema,
+	LeaveSchema:                   leaveSchema,
 }
 
 const singleindent = "  "
