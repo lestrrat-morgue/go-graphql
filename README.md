@@ -17,6 +17,8 @@ GraphQL for Go
 * Can format queries/schemas
 * Can create queries/schemas programatically, via raw [models](./model) or [DSL](./dsl)
 * Can traverse queries/schemas using [visitor](./visitor)
+* TODO: validation
+* TODO: actual dispatching
 
 ## BENCHMARK
 
