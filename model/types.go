@@ -4,20 +4,48 @@ func NewSchema() Schema {
 	return &schema{}
 }
 
-func (s schema) Query() ObjectDefinition {
+func (s schema) Name() string { // poor attempt at satisfying model.Definition
+	return ""
+}
+
+func (s schema) Query() NamedType {
 	return s.query
 }
 
-func (s schema) Types() chan Definition {
-	return s.types.Iterator()
-}
-
-func (s *schema) SetQuery(q ObjectDefinition) {
+func (s *schema) SetQuery(q NamedType) {
 	s.query = q
 }
 
-func (s *schema) AddTypes(list ...Definition) {
+func (s schema) Mutation() NamedType {
+	return s.query
+}
+
+func (s *schema) SetMutation(q NamedType) {
+	s.query = q
+}
+
+func (s schema) Subscription() NamedType {
+	return s.query
+}
+
+func (s *schema) SetSubscription(q NamedType) {
+	s.query = q
+}
+
+func (s *schema) Types() chan NamedType {
+	return s.types.Iterator()
+}
+
+func (s *schema) AddTypes(list ...NamedType) {
 	s.types.Add(list...)
+}
+
+// TODO later: fix type
+func (s *schema) Directives() chan string {
+	return nil
+}
+
+func (s *schema) AddDirectives(list ...string) {
 }
 
 func NewNamedType(name string) NamedType {
@@ -44,7 +72,7 @@ func NewObjectFieldArgumentDefinition(name string, typ Type) ObjectFieldArgument
 func NewObjectDefinition(name string) ObjectDefinition {
 	return &objectDefinition{
 		nameComponent: nameComponent(name),
-		nullable: nullable(true),
+		nullable:      nullable(true),
 	}
 }
 

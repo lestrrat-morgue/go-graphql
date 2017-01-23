@@ -7,7 +7,7 @@ import (
 
 // StarWars is the equivalent of https://github.com/graphql/graphql-js/blob/master/src/__tests__/starWarsSchema.js
 // using our library
-var StarWars model.Schema
+var StarWars model.Document
 
 func init() {
 	var episodeEnum = Enum(
@@ -186,11 +186,20 @@ func init() {
 		),
 	).Type()
 
-	StarWars = Schema(
+	schema := Schema(
+		SchemaQuery(queryType),
+		SchemaType(NamedType(episodeEnum.Name())),
+		SchemaType(NamedType(characterInterface.Name())),
+		SchemaType(NamedType(humanType.Name())),
+		SchemaType(NamedType(droidType.Name())),
+	)
+
+	StarWars = Document(
 		episodeEnum,
 		characterInterface,
 		humanType,
 		droidType,
 		queryType,
+		schema,
 	)
 }

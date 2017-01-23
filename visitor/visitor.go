@@ -192,38 +192,14 @@ func Visit(ctx context.Context, h *Handler, v interface{}) error {
 	switch v.(type) {
 	case model.Document:
 		return visitDocument(ctx, h, v.(model.Document))
-	case model.Schema:
-		return visitSchema(ctx, h, v.(model.Schema))
 	}
 	return errors.Errorf(`invalid input type for visit: %T`, v)
 }
 
 func visitSchema(ctx context.Context, h *Handler, v model.Schema) error {
-	var prune bool
 	if hfunc := h.EnterSchema; hfunc != nil {
 		if err := hfunc(ctx, v); err != nil {
-			if perr, ok := isPruneError(err); ok {
-				prune = perr.Prune()
-			} else {
-				return errors.Wrap(err, `failed to visit document (enter)`)
-			}
-		}
-	}
-
-	if !prune {
-		// This is hackisch, but we need to combine the query and the
-		// definition list in one iterator in order to properly
-		// handle the various cases
-		typch := v.Types()
-		ch := make(chan model.Definition, len(typch)+1)
-		for e := range typch {
-			ch <- e
-		}
-		ch <- v.Query()
-		close(ch)
-
-		if err := visitDefinitionList(ctx, h, ch); err != nil {
-			return errors.Wrap(err, `failed to visit schema component list`)
+			return errors.Wrap(err, `failed to visit document (enter)`)
 		}
 	}
 
@@ -324,6 +300,10 @@ func visitDefinition(ctx context.Context, h *Handler, v model.Definition) error 
 		case model.InputDefinition:
 			if err := visitInputDefinition(ctx, h, v.(model.InputDefinition)); err != nil {
 				return errors.Wrap(err, `failed to visit input definition`)
+			}
+		case model.Schema:
+			if err := visitSchema(ctx, h, v.(model.Schema)); err != nil {
+				return errors.Wrap(err, `failed to visit schema`)
 			}
 		default:
 			return errors.Errorf(`unknown definition %T`, v)

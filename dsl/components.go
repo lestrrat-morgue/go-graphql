@@ -2,27 +2,6 @@ package dsl
 
 import "github.com/lestrrat/go-graphql/model"
 
-func Schema(attrs ...model.Definition) model.Schema {
-	var query model.ObjectDefinition
-	var types model.DefinitionList
-	for _, attr := range attrs {
-		if q, ok := attr.(model.ObjectDefinition); ok && q.Name() == `Query` {
-			query = q
-		} else {
-			switch attr.(type) {
-			case model.ObjectDefinition, model.FragmentDefinition, model.EnumDefinition, model.InterfaceDefinition, model.UnionDefinition, model.InputDefinition:
-				types.Add(attr.(model.Definition))
-			}
-		}
-	}
-
-	s := model.NewSchema()
-	s.SetQuery(query)
-	s.AddTypes(types...)
-	return s
-
-}
-
 type Attribute interface {
 }
 

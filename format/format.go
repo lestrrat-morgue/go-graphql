@@ -46,7 +46,7 @@ var fmtHandler = &visitor.Handler{
 	LeaveObjectDefinition:         leaveObjectDefinition,
 	EnterObjectFieldDefinition:    enterObjectFieldDefinition,
 	EnterEnumDefinition:           enterEnumDefinition,
-	LeaveSchema:                   leaveSchema,
+	EnterSchema:                   enterSchema,
 }
 
 const singleindent = "  "
@@ -223,13 +223,9 @@ func enterDirectiveList(c context.Context) error {
 	return nil
 }
 
-func leaveSchema(c context.Context, v model.Schema) error {
+func enterSchema(c context.Context, v model.Schema) error {
 	ctx := c.(*fmtCtx)
 	buf := ctx.buf
-
-	if buf.Len() > 0 {
-		buf.WriteString("\n\n")
-	}
 
 	buf.WriteString("schema {")
 	moreIndent(c)
@@ -239,6 +235,7 @@ func leaveSchema(c context.Context, v model.Schema) error {
 	buf.WriteString("query: ")
 	buf.WriteString(v.Query().Name())
 
+/*
 	if ch := v.Types(); len(ch) > 0 {
 		buf.WriteByte('\n')
 		buf.Write(ctx.indentbuf)
@@ -254,6 +251,7 @@ func leaveSchema(c context.Context, v model.Schema) error {
 		}
 		buf.WriteByte(']')
 	}
+*/
 	buf.WriteByte('\n')
 	buf.WriteByte('}')
 	return nil

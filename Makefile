@@ -7,4 +7,4 @@ test:
 	go test ./...
 
 bench:
-	go test -tags bench -benchmem -bench .
+	go test -tags bench -benchmem -benchtime=5s -bench .

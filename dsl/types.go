@@ -43,3 +43,69 @@ func ObjectField(name string, typ model.Type, attrs ...Attribute) model.ObjectFi
 func ObjectFieldArgument(name string, typ model.Type, attrs ...Attribute) model.ObjectFieldArgumentDefinition {
 	return model.NewObjectFieldArgumentDefinition(name, typ)
 }
+
+func NamedType(s string) model.NamedType {
+	return model.NewNamedType(s)
+}
+
+type schemaType struct {
+	typ model.NamedType
+}
+
+func (s schemaType) Type() model.NamedType {
+	return s.typ
+}
+
+type SchemaTypeDefinition interface {
+	Type() model.NamedType
+}
+
+func SchemaType(t model.NamedType) SchemaTypeDefinition {
+	return &schemaType{
+		typ: t,
+	}
+}
+
+type schemaQuery struct {
+	typ model.NamedType
+}
+
+func (s schemaQuery) Type() model.NamedType {
+	return s.typ
+}
+
+type SchemaQueryDefinition interface {
+	Type() model.NamedType
+}
+
+func SchemaQuery(t model.NamedType) SchemaQueryDefinition {
+	return &schemaQuery{
+		typ: t,
+	}
+}
+
+func Schema(attrs ...interface{}) model.Schema {
+	var query model.NamedType
+	var types model.NamedTypeList
+
+	for _, attr := range attrs {
+		switch attr.(type) {
+		case *schemaType: // XXX TODO
+			types.Add(attr.(*schemaType).Type())
+		case *schemaQuery:
+			query = attr.(*schemaQuery).Type()
+		}
+	}
+
+	s := model.NewSchema()
+	s.SetQuery(query)
+	s.AddTypes(types...)
+	return s
+
+}
+
+func Document(list ...model.Definition) model.Document {
+	doc := model.NewDocument()
+	doc.AddDefinitions(list...)
+	return doc
+}

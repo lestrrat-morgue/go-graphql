@@ -11,6 +11,7 @@ import (
 	official "github.com/graphql-go/graphql/language/parser"
 	"github.com/graphql-go/graphql/language/source"
 	lestrrat "github.com/lestrrat/go-graphql/parser"
+	neelance "github.com/neelance/graphql-go"
 	"golang.org/x/net/context"
 )
 
@@ -20,7 +21,51 @@ func init() {
 	}()
 }
 
-const src = `query {
+const schema = `
+enum Episode {
+  NEWHOPE
+  EMPIRE
+  JEDI
+}
+
+interface Character {
+  id: String!
+  name: String
+  friends: [Character]
+  appearsIn: [Episode]
+  secretBackstory: String
+}
+
+type Human implements Character {
+  id: String!
+  name: String
+  friends: [Character]
+  appearsIn: [Episode]
+  homePlanet: String
+  secretBackstory: String
+}
+
+type Droid implements Character {
+  id: String!
+  name: String
+  friends: [Character]
+  appearsIn: [Episode]
+  secretBackstory: String
+  primaryFunction: String
+}
+
+type Query {
+  hero(episode: Episode): Character
+  human(id: String!): Human
+  droid(id: String!): Droid
+}
+
+schema {
+  query: Query
+}`
+//  types: [Episode, Character, Human, Droid]
+
+const query = `query {
   me {
     name
   }
@@ -124,24 +169,13 @@ query {
     lat: -53.211
   })
 }
-
-type Person1 {
-  name: String
-  age: Int
-  picture: Url
-  relationship: Person
-}
-
-type Person2 {
-  name: String
-  picture(size: Int): Url
-}`
+`
 
 func BenchmarkParseOfficial(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		_, err := official.Parse(official.ParseParams{
 			Source: &source.Source{
-				Body: []byte(src),
+				Body: []byte(schema),
 				Name: "benchmark",
 			},
 		})
@@ -157,10 +191,21 @@ func BenchmarkParseLestrrat(b *testing.B) {
 	defer cancel()
 	p := lestrrat.New()
 	for i := 0; i < b.N; i++ {
-		_, err := p.Parse(ctx, []byte(src))
+		_, err := p.ParseString(ctx, schema)
 		if err != nil {
 			b.Logf("error: %s", err)
 			return
 		}
 	}
 }
+
+func BenchmarkParseNeelance(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_, err := neelance.ParseSchema(schema, nil)
+		if err != nil {
+			b.Logf("error: %s", err)
+			return
+		}
+	}
+}
+

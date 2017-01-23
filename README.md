@@ -23,10 +23,11 @@ GraphQL for Go
 ## BENCHMARK
 
 ```
-% make bench
-go test -tags bench -benchmem -bench .
-BenchmarkParseOfficial-4       10000        102123 ns/op       41000 B/op       1147 allocs/op
-BenchmarkParseLestrrat-4       20000         77163 ns/op       16530 B/op        599 allocs/op
+% make bench 
+go test -tags bench -benchmem -benchtime=5s -bench .
+BenchmarkParseOfficial-4      200000         45166 ns/op       18344 B/op        516 allocs/op
+BenchmarkParseLestrrat-4      200000         43567 ns/op        7554 B/op        255 allocs/op
+BenchmarkParseNeelance-4      200000         37186 ns/op       12379 B/op        291 allocs/op
 PASS
-ok      github.com/lestrrat/go-graphql  3.399s
+ok      github.com/lestrrat/go-graphql  26.462s
 ```

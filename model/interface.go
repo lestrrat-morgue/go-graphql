@@ -31,14 +31,14 @@ type DirectivesContainer interface {
 	AddDirectives(...Directive)
 }
 
-type SelectionsContainer interface{
+type SelectionsContainer interface {
 	Selections() chan Selection
 	AddSelections(...Selection)
 }
 
-type Type interface {}
+type Type interface{}
 
-type Definition interface{
+type Definition interface {
 	Namer
 }
 
@@ -166,7 +166,7 @@ type EnumElementDefinition interface {
 	Namer
 	Value() Value
 }
-	
+
 type enumElementDefinition struct {
 	nameComponent
 	valueComponent
@@ -357,7 +357,7 @@ type InlineFragment interface {
 	SetTypeCondition(NamedType)
 	TypeCondition() NamedType
 }
-	
+
 type inlineFragment struct {
 	directives DirectiveList
 	selections SelectionList
@@ -376,13 +376,22 @@ type unionDefinition struct {
 }
 
 type Schema interface {
-	Query() ObjectDefinition
-	SetQuery(ObjectDefinition)
-	Types() chan Definition
-	AddTypes(...Definition)
+	Namer
+	Query() NamedType
+	SetQuery(NamedType)
+	Mutation() NamedType
+	SetMutation(NamedType)
+	Subscription() NamedType
+	SetSubscription(NamedType)
+	Types() chan NamedType
+	AddTypes(...NamedType)
+	Directives() chan string
+	AddDirectives(...string)
 }
 
 type schema struct {
-	query ObjectDefinition // But must be a query
-	types DefinitionList
+	query        NamedType
+	types        NamedTypeList
+	mutation     NamedType
+	subscription NamedType
 }

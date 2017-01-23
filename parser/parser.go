@@ -21,7 +21,9 @@ const (
 	queryKey      = "query"
 	trueKey       = "true"
 	typeKey       = "type"
+	typesKey      = "types"
 	unionKey      = "union"
+	schemaKey     = "schema"
 )
 
 type Parser struct{}
@@ -246,6 +248,12 @@ func (pctx *parseCtx) parseDocument() (model.Document, error) {
 					return nil, errors.Wrap(err, `failed to parse input definition`)
 				}
 				doc.AddDefinitions(input)
+			case schemaKey:
+				schema, err := pctx.parseSchemaDefinition()
+				if err != nil {
+					return nil, errors.Wrap(err, `failed to parse schema definition`)
+				}
+				doc.AddDefinitions(schema)
 			default:
 				return nil, unexpectedName(t, `document`, queryKey, mutationKey, fragmentKey, typeKey, enumKey, interfaceKey, unionKey)
 			}
@@ -494,7 +502,7 @@ func (pctx *parseCtx) parseNamedType() (model.NamedType, error) {
 	return typ, nil
 }
 
-func (pctx *parseCtx) parseListType() (model.Type, error) {
+func (pctx *parseCtx) parseListType() (model.ListType, error) {
 	if _, err := consumeToken(pctx, BRACKET_L); err != nil {
 		return nil, errors.Wrap(err, `list type`)
 	}
@@ -1165,4 +1173,82 @@ func (pctx *parseCtx) parseInputDefinitionField() (model.InputFieldDefinition, e
 	def := model.NewInputFieldDefinition(name)
 	def.SetType(typ)
 	return def, nil
+}
+
+func (pctx *parseCtx) parseSchemaDefinition() (model.Schema, error) {
+	if _, err := consumeName(pctx, schemaKey); err != nil {
+		return nil, errors.Wrap(err, `schema`)
+	}
+
+	if _, err := consumeToken(pctx, BRACE_L); err != nil {
+		return nil, errors.Wrap(err, `schema`)
+	}
+
+	var query model.NamedType
+	var types model.NamedTypeList
+	for loop := true; loop; {
+		if peekToken(pctx, BRACE_R) {
+			loop = false
+			continue
+		}
+
+		name, err := consumeName(pctx, queryKey, typesKey)
+		if err != nil {
+			return nil, errors.Wrap(err, `schema`)
+		}
+
+		switch name {
+		case queryKey:
+			if query != nil {
+				return nil, errors.New(`duplicate query key in schema`)
+			}
+
+			if _, err := consumeToken(pctx, COLON); err != nil {
+				return nil, errors.Wrap(err, `schema`)
+			}
+
+			typ, err := pctx.parseNamedType()
+			if err != nil {
+				return nil, errors.Wrap(err, `schema`)
+			}
+			query = typ
+		case typesKey:
+			if types != nil {
+				return nil, errors.New(`duplicate types key in schema`)
+			}
+
+			if _, err := consumeToken(pctx, COLON); err != nil {
+				return nil, errors.Wrap(err, `schema`)
+			}
+			if _, err := consumeToken(pctx, BRACKET_L); err != nil {
+				return nil, errors.Wrap(err, `schema`)
+			}
+			var tmp model.NamedTypeList
+			for innerloop := true; innerloop; {
+				if peekToken(pctx, BRACKET_R) {
+					innerloop = false
+					continue
+				}
+				typ, err := pctx.parseNamedType()
+				if err != nil {
+					return nil, errors.Wrap(err, `schema`)
+				}
+				tmp.Add(typ)
+			}
+			if _, err := consumeToken(pctx, BRACKET_R); err != nil {
+				return nil, errors.Wrap(err, `schema`)
+			}
+			types = tmp
+		default:
+			return nil, errors.New(`unreachable`)
+		}
+	}
+
+	if _, err := consumeToken(pctx, BRACE_R); err != nil {
+		return nil, errors.Wrap(err, `schema`)
+	}
+	s := model.NewSchema()
+	s.SetQuery(query)
+	s.AddTypes(types...)
+	return s, nil
 }
