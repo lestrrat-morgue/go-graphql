@@ -24,7 +24,7 @@ func parseSuccess(src string) (string, func(*testing.T)) {
 		}
 
 		var buf bytes.Buffer
-		if !assert.NoError(t, format.GraphQL(&buf, doc), "format.GraphQL should be successful") {
+		if !assert.NoError(t, format.GraphQL(ctx, &buf, doc), "format.GraphQL should be successful") {
 			return
 		}
 

@@ -103,6 +103,10 @@ func peekName(pctx *parseCtx, name string) bool {
 	}
 }
 
+func (p *Parser) ParseString(ctx context.Context, src string) (model.Document, error) {
+	return p.Parse(ctx, []byte(src))
+}
+
 func (p *Parser) Parse(ctx context.Context, src []byte) (model.Document, error) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()

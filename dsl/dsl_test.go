@@ -3,10 +3,12 @@ package dsl_test
 import (
 	"bytes"
 	"testing"
+	"time"
 
 	"github.com/lestrrat/go-graphql/format"
 	"github.com/lestrrat/go-graphql/schema"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/net/context"
 )
 
 func TestStarWars(t *testing.T) {
@@ -52,8 +54,12 @@ schema {
   query: Query
   types: [Episode, Character, Human, Droid]
 }`
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	var buf bytes.Buffer
-	if !assert.NoError(t, format.GraphQL(&buf, schema.StarWars), "format.GraphQL succeeds") {
+	if !assert.NoError(t, format.GraphQL(ctx, &buf, schema.StarWars), "format.GraphQL succeeds") {
 		return
 	}
 
