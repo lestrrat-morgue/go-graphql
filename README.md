@@ -12,24 +12,11 @@ GraphQL for Go
 
 # STATUS
 
-## PARSING (DONE)
-
-* Query Document
-  * Query
-  * Mutation
-  * Fragments
-  * Directives
-* Type Definitions
-  * Object
-  * Enum
-  * Interface
-  * Union
-  * Input
-  * Schema
-
-## DSL
-
-We have a DSL to build the schema. See this file [dsl_test.go](./dsl/dsl_test.go)
+* Can parse queries
+* Can parse schemas
+* Can format queries/schemas
+* Can create queries/schemas programatically, via raw [models](./model) or [DSL](./dsl)
+* Can traverse queries/schemas using [visitor](./visitor)
 
 ## BENCHMARK
 
