@@ -10,13 +10,25 @@ import (
 // called while visiting a graphql data structure. You may choose
 // to populate only the fields that you are interested in.
 type Handler struct {
+	// EnterSchema is called when starting to visit a model.Schema node.
+	// All of the type definitions, including the query, are visited
+	// afterward
 	EnterSchema func(context.Context, model.Schema) error
+
+	// LeaveSchema is called when leaving a model.Schema node.
 	LeaveSchema func(context.Context, model.Schema) error
 
 	// EnterDocument is called when starting to visit an Document node.
 	EnterDocument func(context.Context, model.Document) error
 
+	// LeaveDocument is called when leaving a model.Document node.
+	LeaveDocument func(context.Context, model.Document) error
+
+	// EnterDefinitionList is called when starting to traverse a
+	// list of `model.Definition`s.
 	EnterDefinitionList func(context.Context) error
+
+	// LeaveDefinitionList is called when leaving a list of `model.Definition`s.
 	LeaveDefinitionList func(context.Context) error
 
 	// EnterDefinition is called when starting to visit an Definition node.
@@ -25,55 +37,133 @@ type Handler struct {
 	// specify the handler for that specific definition type instead
 	EnterDefinition func(context.Context, model.Definition) error
 
+	// LeaveDefinition is called when leaving a model.Definition node.
+	LeaveDefinition func(context.Context, model.Definition) error
+
+	// EnterDirectiveList is called when starting to traverse a
+	// list of `model.Directive`s.
 	EnterDirectiveList func(context.Context) error
+
+	// LeaveDirectiveList is called when leaving a list of `model.Directive`s.
+	LeaveDirectiveList func(context.Context) error
+
 	// EnterDirective is called when starting to visit an Directive node.
 	// Arguments are not visited.
 	// Does NOT respect the Pruner return value
 	EnterDirective func(context.Context, model.Directive) error
 
-	// EnterOperationDefinition is called when starting to visit an OperationDefinition
+	// LeaveDirective is called when leaving a model.Directive node.
+	LeaveDirective func(context.Context, model.Directive) error
+
+	// EnterOperationDefinition is called when starting to visit a model.OperationDefinition node
 	// node. Selections within the definitions are followed. Variable definitions
 	// are NOT followed.
-	EnterOperationDefinition       func(context.Context, model.OperationDefinition) error
-	EnterFragmentDefinition        func(context.Context, model.FragmentDefinition) error
-	EnterObjectDefinition          func(context.Context, model.ObjectDefinition) error
+	EnterOperationDefinition func(context.Context, model.OperationDefinition) error
+
+	// LeaveOperationDefinition is called when leaving a model.OperationDefinition node.
+	LeaveOperationDefinition func(context.Context, model.OperationDefinition) error
+
+	// EnterVariableDefinition is called when starting to visit an VariableDefinition
+	EnterFragmentDefinition func(context.Context, model.FragmentDefinition) error
+
+	// LeaveVariableDefinition is called when leaving a model.VariableDefinition node.
+	LeaveFragmentDefinition func(context.Context, model.FragmentDefinition) error
+
+	// EnterObjectDefinition is called when starting to visit a model.ObjectDefinition node.
+	EnterObjectDefinition func(context.Context, model.ObjectDefinition) error
+
+	// LeaveObjectDefinition is called when leaving a model.ObjectDefinition node.
+	LeaveObjectDefinition func(context.Context, model.ObjectDefinition) error
+
+	// EnterObjectFieldDefinitionList is called when starting to traverse a
+	// list of `model.ObjectFieldDefinition`s.
 	EnterObjectFieldDefinitionList func(context.Context) error
+
+	// LeaveObjectFieldDefinitionList is called when leaving a list of `model.ObjectFieldDefinition`s.
 	LeaveObjectFieldDefinitionList func(context.Context) error
-	EnterObjectFieldDefinition     func(context.Context, model.ObjectFieldDefinition) error
-	EnterInterfaceDefinition       func(context.Context, model.InterfaceDefinition) error
-	EnterInterfaceFieldDefinition  func(context.Context, model.InterfaceFieldDefinition) error
-	EnterEnumDefinition            func(context.Context, model.EnumDefinition) error
-	EnterUnionDefinition           func(context.Context, model.UnionDefinition) error
-	EnterInputDefinition           func(context.Context, model.InputDefinition) error
-	EnterInputFieldDefinitionList  func(context.Context) error
-	EnterInputFieldDefinition      func(context.Context, model.InputFieldDefinition) error
-	EnterSelectionList             func(context.Context) error
-	EnterSelection                 func(context.Context, model.Selection) error
-	EnterSelectionField            func(context.Context, model.SelectionField) error
-	EnterFragmentSpread            func(context.Context, model.FragmentSpread) error
-	EnterInlineFragment            func(context.Context, model.InlineFragment) error
-	EnterSchemaQuery               func(context.Context, model.ObjectDefinition) error
-	LeaveSchemaQuery               func(context.Context, model.ObjectDefinition) error
-	LeaveDocument                  func(context.Context, model.Document) error
-	LeaveDefinition                func(context.Context, model.Definition) error
-	LeaveDirectiveList             func(context.Context) error
-	LeaveDirective                 func(context.Context, model.Directive) error
-	LeaveOperationDefinition       func(context.Context, model.OperationDefinition) error
-	LeaveFragmentDefinition        func(context.Context, model.FragmentDefinition) error
-	LeaveObjectDefinition          func(context.Context, model.ObjectDefinition) error
-	LeaveObjectFieldDefinition     func(context.Context, model.ObjectFieldDefinition) error
-	LeaveInterfaceDefinition       func(context.Context, model.InterfaceDefinition) error
-	LeaveInterfaceFieldDefinition  func(context.Context, model.InterfaceFieldDefinition) error
-	LeaveEnumDefinition            func(context.Context, model.EnumDefinition) error
-	LeaveUnionDefinition           func(context.Context, model.UnionDefinition) error
-	LeaveInputDefinition           func(context.Context, model.InputDefinition) error
-	LeaveInputFieldDefinitionList  func(context.Context) error
-	LeaveInputFieldDefinition      func(context.Context, model.InputFieldDefinition) error
-	LeaveSelectionList             func(context.Context) error
-	LeaveSelection                 func(context.Context, model.Selection) error
-	LeaveSelectionField            func(context.Context, model.SelectionField) error
-	LeaveFragmentSpread            func(context.Context, model.FragmentSpread) error
-	LeaveInlineFragment            func(context.Context, model.InlineFragment) error
+
+	// EnterObjectFieldDefinition is called when starting to visit a model.ObjectFieldDefinition node.
+	EnterObjectFieldDefinition func(context.Context, model.ObjectFieldDefinition) error
+
+	// LeaveObjectFieldDefinition is called when leaving a model.ObjectFieldDefinition node.
+	LeaveObjectFieldDefinition func(context.Context, model.ObjectFieldDefinition) error
+
+	// EnterInterfaceDefinition is called when starting to visit a model.InterfaceDefinition node.
+	EnterInterfaceDefinition func(context.Context, model.InterfaceDefinition) error
+
+	// LeaveInterfaceDefinition is called when leaving a model.InterfaceDefinition node.
+	LeaveInterfaceDefinition func(context.Context, model.InterfaceDefinition) error
+
+	// EnterInterfaceFieldDefinition is called when starting to visit a model.InterfaceFieldDefinition node.
+	EnterInterfaceFieldDefinition func(context.Context, model.InterfaceFieldDefinition) error
+
+	// LeaveInterfaceFieldDefinition is called when leaving a model.InterfaceFieldDefinition node.
+	LeaveInterfaceFieldDefinition func(context.Context, model.InterfaceFieldDefinition) error
+
+	// EnterEnumDefinition is called when starting to visit an EnumDefinition node.
+	EnterEnumDefinition func(context.Context, model.EnumDefinition) error
+
+	// LeaveEnumDefinition is called when leaving a model.EnumDefinition node.
+	LeaveEnumDefinition func(context.Context, model.EnumDefinition) error
+
+	// EnterUnionDefinition is called when starting to visit an UnionDefinition node.
+	EnterUnionDefinition func(context.Context, model.UnionDefinition) error
+
+	// LeaveUnionDefinition is called when leaving a model.UnionDefinition node.
+	LeaveUnionDefinition func(context.Context, model.UnionDefinition) error
+
+	// EnterInputDefinition is called when starting to visit a model.InputDefinition node.
+	EnterInputDefinition func(context.Context, model.InputDefinition) error
+
+	// LeaveInputDefinition is called when leaving a model.InputDefinition node.
+	LeaveInputDefinition func(context.Context, model.InputDefinition) error
+
+	// EnterInputFieldDefinitionList is called when starting to traverse a
+	// list of `model.InputFieldDefinition`s.
+	EnterInputFieldDefinitionList func(context.Context) error
+
+	// LeaveInputFieldDefinitionList is called when leaving a list of `model.InputFieldDefinition`s.
+	LeaveInputFieldDefinitionList func(context.Context) error
+
+	// EnterInputFieldDefinition is called when starting to visit a model.InputFieldDefinition node.
+	EnterInputFieldDefinition func(context.Context, model.InputFieldDefinition) error
+
+	// LeaveInputFieldDefinition is called when leaving a model.InputFieldDefinition node.
+	LeaveInputFieldDefinition func(context.Context, model.InputFieldDefinition) error
+
+	// EnterSelectionList is called when starting to traverse a
+	// list of `model.Selection`s.
+	EnterSelectionList func(context.Context) error
+
+	// LeaveSelectionList is called when leaving a list of `model.Selection`s.
+	LeaveSelectionList func(context.Context) error
+
+	// EnterSelection is called when starting to visit a model.Selection node.
+	// Note that this is called *BEFORE* determining the actual type of the
+	// selection. If you only care about a specify definition type,
+	// specify the handler for that specific definition type instead
+	EnterSelection func(context.Context, model.Selection) error
+
+	// LeaveSelection is called when leaving a model.Selection node.
+	LeaveSelection func(context.Context, model.Selection) error
+
+	// EnterSelectionField is called when starting to visit a model.SelectionField node.
+	EnterSelectionField func(context.Context, model.SelectionField) error
+
+	// LeaveSelectionField is called when leaving a model.SelectionField node.
+	LeaveSelectionField func(context.Context, model.SelectionField) error
+
+	// EnterFragmentSpread is called when starting to visit a model.FragmentSpread node.
+	EnterFragmentSpread func(context.Context, model.FragmentSpread) error
+
+	// LeaveFragmentSpread is called when leaving a model.FragmentSpread node.
+	LeaveFragmentSpread func(context.Context, model.FragmentSpread) error
+
+	// EnterInlineFragment is called when starting to visit a model.InlineFragment node.
+	EnterInlineFragment func(context.Context, model.InlineFragment) error
+
+	// LeaveInlineFragment is called when leaving a model.InlineFragment node.
+	LeaveInlineFragment func(context.Context, model.InlineFragment) error
 }
 
 // Pruner is the interface for errors that tell the visitor to prune
@@ -96,6 +186,8 @@ func isPruneError(err error) (Pruner, bool) {
 	return nil, false
 }
 
+// Visit starts visiting the given node structure, and calls the appropriate
+// handlers that are registered in the `h` argument
 func Visit(ctx context.Context, h *Handler, v interface{}) error {
 	switch v.(type) {
 	case model.Document:
@@ -123,7 +215,7 @@ func visitSchema(ctx context.Context, h *Handler, v model.Schema) error {
 		// definition list in one iterator in order to properly
 		// handle the various cases
 		typch := v.Types()
-		ch := make(chan model.Definition, len(typch) + 1)
+		ch := make(chan model.Definition, len(typch)+1)
 		for e := range typch {
 			ch <- e
 		}
@@ -138,32 +230,6 @@ func visitSchema(ctx context.Context, h *Handler, v model.Schema) error {
 	if hfunc := h.LeaveSchema; hfunc != nil {
 		if err := hfunc(ctx, v); err != nil {
 			return errors.Wrap(err, `failed to visit document (leave)`)
-		}
-	}
-	return nil
-}
-
-func visitSchemaQuery(ctx context.Context, h *Handler, v model.ObjectDefinition) error {
-	var prune bool
-	if hfunc := h.EnterSchemaQuery; hfunc != nil {
-		if err := hfunc(ctx, v); err != nil {
-			if perr, ok := isPruneError(err); ok {
-				prune = perr.Prune()
-			} else {
-				return errors.Wrap(err, `failed to visit schema query (enter)`)
-			}
-		}
-	}
-
-	if !prune {
-		if err := visitObjectFieldDefinitionList(ctx, h, v.Fields()); err != nil {
-			return errors.Wrap(err, `failed to visit object definition list`)
-		}
-	}
-
-	if hfunc := h.LeaveSchemaQuery; hfunc != nil {
-		if err := hfunc(ctx, v); err != nil {
-			return errors.Wrap(err, `failed to visit schema query (leave)`)
 		}
 	}
 	return nil
