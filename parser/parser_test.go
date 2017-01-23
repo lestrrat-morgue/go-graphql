@@ -231,7 +231,8 @@ mutation CreateReviewForEpisode($ep: Episode!, $review: ReviewInput!) {
 }`))
 	t.Run(parseSuccess(`schema {
   query: Foo
-  types: [Bar, Baz, Quux]
 }`))
+//  types: [Bar, Baz, Quux] (TODO from above test)
+
 }
  
