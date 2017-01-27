@@ -1,5 +1,7 @@
 package model
 
+import "sync"
+
 // Namer represents all those that have a name to share
 type Namer interface {
 	Name() string
@@ -49,6 +51,11 @@ type Document interface {
 type document struct {
 	definitions DefinitionList
 	types       TypeList
+
+	qmu       sync.Mutex // lock queries
+	mmu       sync.Mutex // lock mutations
+	queries   map[string]OperationDefinition
+	mutations map[string]OperationDefinition
 }
 
 type OperationType string

@@ -235,7 +235,6 @@ func enterSchema(c context.Context, v model.Schema) error {
 	buf.WriteString("query: ")
 	buf.WriteString(v.Query().Name())
 
-/*
 	if ch := v.Types(); len(ch) > 0 {
 		buf.WriteByte('\n')
 		buf.Write(ctx.indentbuf)
@@ -251,7 +250,6 @@ func enterSchema(c context.Context, v model.Schema) error {
 		}
 		buf.WriteByte(']')
 	}
-*/
 	buf.WriteByte('\n')
 	buf.WriteByte('}')
 	return nil
